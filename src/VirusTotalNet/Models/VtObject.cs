@@ -11,19 +11,19 @@ namespace VirusTotalNet.v3.Models;
 public abstract class VtObject<TA> where TA : class
 {
     /// <summary>Type of the object, e.g. <c>file</c>, <c>url</c>.</summary>
-    public string Type { get; init; } = string.Empty;
+    public string Type { get; set; } = string.Empty;
 
     /// <summary>Identifier of the object, e.g. the SHA-256 for files.</summary>
-    public string Id { get; init; } = string.Empty;
+    public string Id { get; set; } = string.Empty;
 
     /// <summary>Typed attributes; <c>null</c> when the API did not include them (e.g. relationship entries).</summary>
-    public TA? Attributes { get; init; }
+    public TA? Attributes { get; set; }
 
     /// <summary>Related objects; the raw map is preserved losslessly (typed accessors arrive in M4).</summary>
-    public VtRelationships? Relationships { get; init; }
+    public VtRelationships? Relationships { get; set; }
 
     /// <summary>Links of the object, typically a <c>self</c> URL.</summary>
-    public VtLinks? Links { get; init; }
+    public VtLinks? Links { get; set; }
 
     /// <summary>Any object fields not mapped by properties above, preserved losslessly.</summary>
     [JsonExtensionData]
