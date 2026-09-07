@@ -4,11 +4,13 @@
 
 ### Features
 
-*- Work in progress - nothing functional shipped yet (Milestone M0 scaffold only).*
+*- Work in progress - core envelope/config layer done, HTTP client and endpoints still ahead.*
 
 * Zero external dependencies - only System.Text.Json (in-box) - keeps your deployment folder lean
 * Targets net8.0, marked trimmable and AOT-compatible
 * Packaged as `VirusTotalNet.v3` public preview
+* `VtResponse<T>` envelope `{ data, meta, links, error }` — one parse path for every endpoint, lossless via `JsonExtensionData`
+* `VirusTotalOptions` + shared `VirusTotalJson` options with tolerant converters (string-typed numbers, `YYYYmmdd`, Unix timestamps, literal `"null"`)
 
 ### Examples
 

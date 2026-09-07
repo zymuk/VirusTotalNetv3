@@ -1,0 +1,32 @@
+{
+  "data": {
+    "type": "file",
+    "id": "aa1c00e982e0e0e4fdf1c70ddf2b2f7f4d0c9e7e702f00e3f9a76f8c6d5a4b3c2",
+    "attributes": {
+      "sha256": "aa1c00e982e0e0e4fdf1c70ddf2b2f7f4d0c9e7e702f00e3f9a76f8c6d5a4b3c2",
+      "size": "12345",
+      "name": "sample.exe",
+      "times_submitted": "12",
+      "first_submission_date": "20240101",
+      "last_modification_date": 1704067200
+    },
+    "relationships": {
+      "comments": {
+        "data": [],
+        "meta": { "count": 0 }
+      }
+    },
+    "links": {
+      "self": "https://www.virustotal.com/api/v3/files/aa1c00e982e0e0e4fdf1c70ddf2b2f7f4d0c9e7e702f00e3f9a76f8c6d5a4b3c2"
+    }
+  },
+  "meta": {
+    "file_info": {
+      "sha256": "aa1c00e982e0e0e4fdf1c70ddf2b2f7f4d0c9e7e702f00e3f9a76f8c6d5a4b3c2"
+    }
+  },
+  "links": {
+    "self": "https://www.virustotal.com/api/v3/files/aa1c00e982e0e0e4fdf1c70ddf2b2f7f4d0c9e7e702f00e3f9a76f8c6d5a4b3c2"
+  },
+  "top_level_extra": "preserved"
+}

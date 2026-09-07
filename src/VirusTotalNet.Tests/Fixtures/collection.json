@@ -1,0 +1,11 @@
+{
+  "data": [
+    { "type": "file", "id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" },
+    { "type": "file", "id": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb" }
+  ],
+  "meta": { "count": 2 },
+  "links": {
+    "self": "https://www.virustotal.com/api/v3/files/search",
+    "next": "https://www.virustotal.com/api/v3/files/search?cursor=abc123"
+  }
+}

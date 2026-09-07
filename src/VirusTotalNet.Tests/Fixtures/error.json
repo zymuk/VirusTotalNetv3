@@ -1,0 +1,7 @@
+{
+  "error": {
+    "code": "QuotaExceededError",
+    "message": "Quota exceeded",
+    "detail": "Your quota is exhausted for this period."
+  }
+}

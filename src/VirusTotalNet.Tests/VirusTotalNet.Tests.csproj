@@ -24,4 +24,8 @@
     <ProjectReference Include="..\VirusTotalNet\VirusTotalNet.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Content Include="Fixtures\*.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
 </Project>
