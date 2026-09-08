@@ -11,6 +11,9 @@
 * Packaged as `VirusTotalNet.v3` public preview
 * `VtResponse<T>` envelope `{ data, meta, links, error }` — one parse path for every endpoint, lossless via `JsonExtensionData`
 * `VirusTotalOptions` + shared `VirusTotalJson` options with tolerant converters (string-typed numbers, `YYYYmmdd`, Unix timestamps, literal `"null"`)
+* `VtClient`/`IVtClient` — wraps `HttpClient` with `x-apikey` header and `https://www.virustotal.com/api/v3/` base URL; AOT-safe `GetAsync` overload accepting `JsonTypeInfo<VtResponse<T>>`
+* Rate limiter (sliding window, default 4 req/min & 500 req/day) shared across all requests
+* Exception hierarchy `VirusTotalException` → `VtHttpException` → concrete (`NotFound`, `QuotaExceeded`, `Authentication`, `RateLimit`, `InvalidRequest`, `Server`); maps API `error.code` + HTTP status to the right exception, `ThrowOnError` toggles throwing vs. returning the error envelope
 
 ### Examples
 
