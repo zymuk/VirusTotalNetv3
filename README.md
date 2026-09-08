@@ -13,6 +13,7 @@
 * `VirusTotalOptions` + shared `VirusTotalJson` options with tolerant converters (string-typed numbers, `YYYYmmdd`, Unix timestamps, literal `"null"`)
 * `VtClient`/`IVtClient` — wraps `HttpClient` with `x-apikey` header and `https://www.virustotal.com/api/v3/` base URL; AOT-safe `GetAsync` overload accepting `JsonTypeInfo<VtResponse<T>>`
 * Rate limiter (sliding window, default 4 req/min & 500 req/day) shared across all requests
+* Retry policy — exponential backoff with jitter on HTTP 429/5xx and network errors, honors the API `Retry-After` header, configurable via `UseRetry`/`MaxRetries`/`InitialRetryDelay`
 * Exception hierarchy `VirusTotalException` → `VtHttpException` → concrete (`NotFound`, `QuotaExceeded`, `Authentication`, `RateLimit`, `InvalidRequest`, `Server`); maps API `error.code` + HTTP status to the right exception, `ThrowOnError` toggles throwing vs. returning the error envelope
 
 ### Examples

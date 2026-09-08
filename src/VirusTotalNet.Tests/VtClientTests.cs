@@ -53,7 +53,7 @@ public class VtClientTests
         var handler = new StubHttpMessageHandler(
             StubHttpMessageHandler.Json(HttpStatusCode.InternalServerError, "oops"));
 
-        using var client = new VtClient(Options(), new HttpClient(handler));
+        using var client = new VtClient(new VirusTotalOptions { ApiKey = "k", UseRetry = false }, new HttpClient(handler));
 
         var ex = await Assert.ThrowsAsync<VtHttpException>(
             () => client.GetAsync<TestFileObject>("/files/abc"));
@@ -83,7 +83,7 @@ public class VtClientTests
             StubHttpMessageHandler.Json((HttpStatusCode)429,
                 """{ "error": { "code": "QuotaExceededError", "message": "Quota exceeded" } }"""));
 
-        using var client = new VtClient(Options(), new HttpClient(handler));
+        using var client = new VtClient(new VirusTotalOptions { ApiKey = "k", UseRetry = false }, new HttpClient(handler));
 
         var ex = await Assert.ThrowsAsync<QuotaExceededException>(
             () => client.GetAsync<TestFileObject>("/files/abc"));

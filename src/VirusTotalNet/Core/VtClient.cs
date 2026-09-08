@@ -1,4 +1,5 @@
 using System;
+using System.Globalization;
 using System.Net;
 using System.Net.Http;
 using System.Text;
@@ -12,13 +13,14 @@ namespace VirusTotalNet.v3.Core;
 
 /// <summary>
 /// Client for the VirusTotal API v3.
-/// Wraps <see cref="HttpClient"/> with authentication header and base URL.
+/// Wraps <see cref="HttpClient"/> with authentication header, base URL and retry policy.
 /// </summary>
 public sealed class VtClient : IVtClient, IDisposable
 {
     private readonly HttpClient _httpClient;
     private readonly VirusTotalOptions _options;
     private readonly RateLimiter _rateLimiter;
+    private readonly Random _jitter;
     private readonly bool _ownsHttpClient;
 
     public VtClient(VirusTotalOptions options, HttpClient? httpClient = null)
@@ -29,6 +31,7 @@ public sealed class VtClient : IVtClient, IDisposable
         _httpClient = httpClient ?? new HttpClient();
         _ownsHttpClient = httpClient is null;
         _rateLimiter = new RateLimiter(_options.RequestsPerMinute, _options.RequestsPerDay);
+        _jitter = new Random();
 
         _httpClient.BaseAddress = _options.BaseAddress;
         _httpClient.DefaultRequestHeaders.Add("x-apikey", _options.ApiKey);
@@ -39,37 +42,120 @@ public sealed class VtClient : IVtClient, IDisposable
 
     public async Task<VtResponse<T>> GetAsync<T>(string uri, CancellationToken cancellationToken = default)
     {
-        await _rateLimiter.WaitUntilAllowedAsync(cancellationToken).ConfigureAwait(false);
-
-        var requestUri = BuildRelativeUri(uri);
-        using var request = new HttpRequestMessage(HttpMethod.Get, requestUri);
-        var response = await _httpClient.SendAsync(request, cancellationToken).ConfigureAwait(false);
-        return await DeserializeResponse<T>(response, cancellationToken).ConfigureAwait(false);
+        return await SendWithRetryAsync(
+            () => new HttpRequestMessage(HttpMethod.Get, BuildRelativeUri(uri)),
+            DeserializeResponse<T>,
+            cancellationToken).ConfigureAwait(false);
     }
 
 #if NET8_0_OR_GREATER
     public async Task<VtResponse<T>> GetAsync<T>(string uri, JsonTypeInfo<VtResponse<T>> typeInfo, CancellationToken cancellationToken = default)
     {
-        await _rateLimiter.WaitUntilAllowedAsync(cancellationToken).ConfigureAwait(false);
-
-        var requestUri = BuildRelativeUri(uri);
-        using var request = new HttpRequestMessage(HttpMethod.Get, requestUri);
-        var response = await _httpClient.SendAsync(request, cancellationToken).ConfigureAwait(false);
-        return await DeserializeResponse(response, typeInfo, cancellationToken).ConfigureAwait(false);
+        return await SendWithRetryAsync(
+            () => new HttpRequestMessage(HttpMethod.Get, BuildRelativeUri(uri)),
+            (response, ct) => DeserializeResponse(response, typeInfo, ct),
+            cancellationToken).ConfigureAwait(false);
     }
-
 #endif
 
     public async Task<VtResponse<T>> PostAsync<T>(string uri, object body, CancellationToken cancellationToken = default)
     {
-        await _rateLimiter.WaitUntilAllowedAsync(cancellationToken).ConfigureAwait(false);
+        return await SendWithRetryAsync(
+            () =>
+            {
+                var content = new StringContent(SerializeBody(body), Encoding.UTF8, "application/json");
+                return new HttpRequestMessage(HttpMethod.Post, BuildRelativeUri(uri)) { Content = content };
+            },
+            DeserializeResponse<T>,
+            cancellationToken).ConfigureAwait(false);
+    }
 
-        var content = new StringContent(SerializeBody(body), Encoding.UTF8, "application/json");
+    private async Task<VtResponse<T>> SendWithRetryAsync<T>(
+        Func<HttpRequestMessage> requestFactory,
+        Func<HttpResponseMessage, CancellationToken, Task<VtResponse<T>>> deserialize,
+        CancellationToken cancellationToken)
+    {
+        var attempt = 0;
+        while (true)
+        {
+            await _rateLimiter.WaitUntilAllowedAsync(cancellationToken).ConfigureAwait(false);
 
-        var requestUri = BuildRelativeUri(uri);
-        using var request = new HttpRequestMessage(HttpMethod.Post, requestUri) { Content = content };
-        var response = await _httpClient.SendAsync(request, cancellationToken).ConfigureAwait(false);
-        return await DeserializeResponse<T>(response, cancellationToken).ConfigureAwait(false);
+            HttpResponseMessage? response = null;
+            try
+            {
+                using var request = requestFactory();
+                response = await _httpClient.SendAsync(request, cancellationToken).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                throw;
+            }
+            catch (Exception ex) when (IsRetryableNetworkError(ex) && ShouldRetry(attempt))
+            {
+                response?.Dispose();
+                await BackoffDelayAsync(attempt, retryAfter: null, cancellationToken).ConfigureAwait(false);
+                attempt++;
+                continue;
+            }
+
+            if (IsSuccessWithRetry(response))
+            {
+                var result = await deserialize(response, cancellationToken).ConfigureAwait(false);
+                response.Dispose();
+                return result;
+            }
+
+            if (IsRetryableStatus(response) && ShouldRetry(attempt))
+            {
+                var retryAfter = GetRetryAfter(response);
+                response.Dispose();
+                await BackoffDelayAsync(attempt, retryAfter, cancellationToken).ConfigureAwait(false);
+                attempt++;
+                continue;
+            }
+
+            var final = await deserialize(response, cancellationToken).ConfigureAwait(false);
+            response.Dispose();
+            return final;
+        }
+    }
+
+    private bool ShouldRetry(int attempt) => _options.UseRetry && attempt < _options.MaxRetries;
+
+    private async Task BackoffDelayAsync(int attempt, TimeSpan? retryAfter, CancellationToken cancellationToken)
+    {
+        var baseDelay = retryAfter ?? TimeSpan.FromMilliseconds(_options.InitialRetryDelay.TotalMilliseconds * Math.Pow(2, attempt));
+        var jitterMs = (int)(baseDelay.TotalMilliseconds * 0.2);
+        var jitter = jitterMs > 0 ? _jitter.Next(0, jitterMs) : 0;
+        var delay = baseDelay + TimeSpan.FromMilliseconds(jitter);
+
+        await Task.Delay(delay, cancellationToken).ConfigureAwait(false);
+    }
+
+    private static bool IsSuccessWithRetry(HttpResponseMessage? response)
+        => response is not null && response.IsSuccessStatusCode;
+
+    private static bool IsRetryableStatus(HttpResponseMessage? response)
+        => response is not null && ((int)response.StatusCode == 429 || (int)response.StatusCode >= 500);
+
+    private static bool IsRetryableNetworkError(Exception ex)
+        => ex is HttpRequestException || ex is TaskCanceledException;
+
+    private static TimeSpan? GetRetryAfter(HttpResponseMessage response)
+    {
+        if (!response.Headers.TryGetValues("Retry-After", out var values))
+            return null;
+
+        foreach (var value in values)
+        {
+            if (int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var seconds))
+                return TimeSpan.FromSeconds(seconds);
+
+            if (DateTimeOffset.TryParse(value, CultureInfo.InvariantCulture, DateTimeStyles.None, out var date))
+                return date.Subtract(DateTimeOffset.UtcNow);
+        }
+
+        return null;
     }
 
     private async Task<VtResponse<T>> DeserializeResponse<T>(HttpResponseMessage response, CancellationToken cancellationToken)
@@ -102,7 +188,6 @@ public sealed class VtClient : IVtClient, IDisposable
     }
 
 #if NET8_0_OR_GREATER
-
     private async Task<VtResponse<T>> DeserializeResponse<T>(HttpResponseMessage response, JsonTypeInfo<VtResponse<T>> typeInfo, CancellationToken cancellationToken)
     {
         if (response.IsSuccessStatusCode)
@@ -131,7 +216,6 @@ public sealed class VtClient : IVtClient, IDisposable
 
         throw new VtHttpException(response.StatusCode, $"HTTP {(int)response.StatusCode} {response.ReasonPhrase}");
     }
-
 #endif
 
     private static VirusTotalException MapErrorToException(VtError error, HttpStatusCode statusCode)
