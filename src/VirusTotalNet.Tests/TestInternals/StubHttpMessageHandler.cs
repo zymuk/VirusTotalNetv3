@@ -15,6 +15,9 @@ public sealed class StubHttpMessageHandler : HttpMessageHandler
 {
     private readonly Func<HttpRequestMessage, HttpResponseMessage> _responder;
 
+    /// <summary>Raw body of the most recent request, captured before the content is disposed.</summary>
+    public string? LastRequestBody { get; private set; }
+
     public List<HttpRequestMessage> Requests { get; } = new();
 
     public StubHttpMessageHandler(HttpResponseMessage response)
@@ -27,13 +30,16 @@ public sealed class StubHttpMessageHandler : HttpMessageHandler
         _responder = responder;
     }
 
-    protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+    protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
     {
         Requests.Add(request);
 
+        if (request.Content is not null)
+            LastRequestBody = await request.Content.ReadAsStringAsync().ConfigureAwait(false);
+
         var response = _responder(request);
         response.RequestMessage = request;
-        return Task.FromResult(response);
+        return response;
     }
 
     public static HttpResponseMessage Json(HttpStatusCode statusCode, string json)

@@ -26,4 +26,10 @@ public interface IVtClient
     /// Performs a POST request with a JSON body and deserialises the response envelope.
     /// </summary>
     Task<VtResponse<T>> PostAsync<T>(string uri, object body, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Performs a POST request with a raw <see cref="HttpContent"/> body (e.g. multipart file upload)
+    /// and deserialises the response envelope. Same retry/rate-limit/error handling as the other calls.
+    /// </summary>
+    Task<VtResponse<T>> PostAsync<T>(string uri, HttpContent content, CancellationToken cancellationToken = default);
 }

@@ -70,6 +70,14 @@ public sealed class VtClient : IVtClient, IDisposable
             cancellationToken).ConfigureAwait(false);
     }
 
+    public async Task<VtResponse<T>> PostAsync<T>(string uri, HttpContent content, CancellationToken cancellationToken = default)
+    {
+        return await SendWithRetryAsync(
+            () => new HttpRequestMessage(HttpMethod.Post, BuildRelativeUri(uri)) { Content = content },
+            DeserializeResponse<T>,
+            cancellationToken).ConfigureAwait(false);
+    }
+
     private async Task<VtResponse<T>> SendWithRetryAsync<T>(
         Func<HttpRequestMessage> requestFactory,
         Func<HttpResponseMessage, CancellationToken, Task<VtResponse<T>>> deserialize,
