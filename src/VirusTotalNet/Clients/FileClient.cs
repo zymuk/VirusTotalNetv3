@@ -21,6 +21,14 @@ public interface IFileClient
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>The created analysis object; poll its id to retrieve the completed report.</returns>
     Task<AnalysisObject> ScanFileAsync(Stream stream, string? fileName = null, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Retrieves the report of a file identified by its MD5, SHA-1 or SHA-256 digest (<c>GET /files/{id}</c>).
+    /// </summary>
+    /// <param name="id">MD5, SHA-1 or SHA-256 digest of the file.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The file object with its attributes and detection statistics.</returns>
+    Task<FileObject> GetFileAsync(string id, CancellationToken cancellationToken = default);
 }
 
 /// <summary>
@@ -52,5 +60,15 @@ public sealed class FileClient : IFileClient
 
         var response = await _client.PostAsync<AnalysisObject>("/files", content, cancellationToken).ConfigureAwait(false);
         return response.Data ?? new AnalysisObject();
+    }
+
+    /// <inheritdoc />
+    public async Task<FileObject> GetFileAsync(string id, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(id))
+            throw new ArgumentException("A file digest is required.", nameof(id));
+
+        var response = await _client.GetAsync<FileObject>($"/files/{id}", cancellationToken).ConfigureAwait(false);
+        return response.Data ?? new FileObject();
     }
 }

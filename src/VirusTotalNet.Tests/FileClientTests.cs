@@ -133,4 +133,74 @@ Assert.Contains("name=file", handler.LastRequestBody);
         await Assert.ThrowsAsync<ArgumentNullException>(
             () => client.ScanFileAsync(null!, "x.bin"));
     }
+
+    [Fact]
+    public async Task GetFile_SendsGet_ToFilesEndpoint()
+    {
+        var handler = new StubHttpMessageHandler(
+            StubHttpMessageHandler.Json(HttpStatusCode.OK,
+                """{ "data": { "type": "file", "id": "hash123" } }"""));
+
+        using var vt = new VtClient(Options(), new HttpClient(handler));
+        var client = new FileClient(vt);
+
+        var file = await client.GetFileAsync("hash123");
+
+        Assert.NotNull(file);
+        Assert.Equal("file", file!.Type);
+        Assert.Equal("hash123", file.Id);
+
+        var request = Assert.Single(handler.Requests);
+        Assert.Equal(HttpMethod.Get, request.Method);
+        Assert.Equal(VirusTotalOptions.DefaultBaseAddress + "files/hash123", request.RequestUri!.ToString());
+    }
+
+    [Fact]
+    public async Task GetFile_DeserializesAttributes()
+    {
+        const string json = """
+            {
+              "data": {
+                "type": "file",
+                "id": "aa1c00e982e0e0e4fdf1c70ddf2b2f7f4d0c9e7e702f00e3f9a76f8c6d5a4b3c2",
+                "attributes": {
+                  "sha256": "aa1c00e982e0e0e4fdf1c70ddf2b2f7f4d0c9e7e702f00e3f9a76f8c6d5a4b3c2",
+                  "size": "12345",
+                  "last_analysis_stats": { "malicious": "5", "suspicious": "1", "harmless": "60", "undetected": "30", "type-unsupported": "4", "timeout": "0" }
+                }
+              }
+            }
+            """;
+
+        var handler = new StubHttpMessageHandler(
+            StubHttpMessageHandler.Json(HttpStatusCode.OK, json));
+
+        using var vt = new VtClient(Options(), new HttpClient(handler));
+        var client = new FileClient(vt);
+
+        var file = await client.GetFileAsync("aa1c00e982e0e0e4fdf1c70ddf2b2f7f4d0c9e7e702f00e3f9a76f8c6d5a4b3c2");
+
+        var attrs = file.Attributes;
+        Assert.NotNull(attrs);
+        Assert.Equal("aa1c00e982e0e0e4fdf1c70ddf2b2f7f4d0c9e7e702f00e3f9a76f8c6d5a4b3c2", attrs!.Sha256);
+        Assert.Equal(12345, attrs.Size);
+        Assert.Equal(5, attrs.LastAnalysisStats!.Malicious);
+        Assert.Equal(60, attrs.LastAnalysisStats.Harmless);
+        Assert.Equal(4, attrs.LastAnalysisStats.TypeUnsupported);
+    }
+
+    [Fact]
+    public async Task GetFile_EmptyId_Throws()
+    {
+        var handler = new StubHttpMessageHandler(
+            StubHttpMessageHandler.Json(HttpStatusCode.OK, """{ "data": null }"""));
+
+        using var vt = new VtClient(Options(), new HttpClient(handler));
+        var client = new FileClient(vt);
+
+        await Assert.ThrowsAsync<ArgumentException>(
+            () => client.GetFileAsync(" "));
+
+        Assert.Empty(handler.Requests);
+    }
 }
