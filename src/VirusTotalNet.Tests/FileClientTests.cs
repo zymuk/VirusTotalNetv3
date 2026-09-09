@@ -203,4 +203,40 @@ Assert.Contains("name=file", handler.LastRequestBody);
 
         Assert.Empty(handler.Requests);
     }
+
+    [Fact]
+    public async Task AnalyseFile_SendsPost_ToRescanEndpoint()
+    {
+        var handler = new StubHttpMessageHandler(
+            StubHttpMessageHandler.Json(HttpStatusCode.OK,
+                """{ "data": { "type": "analysis", "id": "analysis-rescan-1" } }"""));
+
+        using var vt = new VtClient(Options(), new HttpClient(handler));
+        var client = new FileClient(vt);
+
+        var analysis = await client.AnalyseFileAsync("hash123");
+
+        Assert.Equal("analysis", analysis!.Type);
+        Assert.Equal("analysis-rescan-1", analysis.Id);
+
+        var request = Assert.Single(handler.Requests);
+        Assert.Equal(HttpMethod.Post, request.Method);
+        Assert.Equal(VirusTotalOptions.DefaultBaseAddress + "files/hash123/analyse", request.RequestUri!.ToString());
+        Assert.Equal("{}", handler.LastRequestBody);
+    }
+
+    [Fact]
+    public async Task AnalyseFile_EmptyId_Throws()
+    {
+        var handler = new StubHttpMessageHandler(
+            StubHttpMessageHandler.Json(HttpStatusCode.OK, """{ "data": null }"""));
+
+        using var vt = new VtClient(Options(), new HttpClient(handler));
+        var client = new FileClient(vt);
+
+        await Assert.ThrowsAsync<ArgumentException>(
+            () => client.AnalyseFileAsync(""));
+
+        Assert.Empty(handler.Requests);
+    }
 }

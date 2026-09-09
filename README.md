@@ -15,7 +15,7 @@
 * Rate limiter (sliding window, default 4 req/min & 500 req/day) shared across all requests
 * Retry policy — exponential backoff with jitter on HTTP 429/5xx and network errors, honors the API `Retry-After` header, configurable via `UseRetry`/`MaxRetries`/`InitialRetryDelay`
 * Exception hierarchy `VirusTotalException` → `VtHttpException` → concrete (`NotFound`, `QuotaExceeded`, `Authentication`, `RateLimit`, `InvalidRequest`, `Server`); maps API `error.code` + HTTP status to the right exception, `ThrowOnError` toggles throwing vs. returning the error envelope
-* `IFileClient`/`FileClient` — `ScanFileAsync` uploads a file as multipart/form-data (`POST /files`, ≤ 32 MB enforced) and returns an `AnalysisObject` with typed `AnalysisAttributes` (status, date, stats); `GetFileAsync` retrieves the report for any MD5/SHA-1/SHA-256 (`GET /files/{id}`)
+* `IFileClient`/`FileClient` — `ScanFileAsync` uploads a file as multipart/form-data (`POST /files`, ≤ 32 MB enforced) and returns an `AnalysisObject` with typed `AnalysisAttributes` (status, date, stats); `GetFileAsync` retrieves the report for any MD5/SHA-1/SHA-256 (`GET /files/{id}`); `AnalyseFileAsync` rescans a known file (`POST /files/{id}/analyse`)
 
 ### Examples
 

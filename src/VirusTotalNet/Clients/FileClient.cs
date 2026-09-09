@@ -29,6 +29,14 @@ public interface IFileClient
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>The file object with its attributes and detection statistics.</returns>
     Task<FileObject> GetFileAsync(string id, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Rescans a file already present on VirusTotal (<c>POST /files/{id}/analyse</c>).
+    /// </summary>
+    /// <param name="id">MD5, SHA-1 or SHA-256 digest of the file to rescan.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The newly created analysis object.</returns>
+    Task<AnalysisObject> AnalyseFileAsync(string id, CancellationToken cancellationToken = default);
 }
 
 /// <summary>
@@ -70,5 +78,15 @@ public sealed class FileClient : IFileClient
 
         var response = await _client.GetAsync<FileObject>($"/files/{id}", cancellationToken).ConfigureAwait(false);
         return response.Data ?? new FileObject();
+    }
+
+    /// <inheritdoc />
+    public async Task<AnalysisObject> AnalyseFileAsync(string id, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(id))
+            throw new ArgumentException("A file digest is required.", nameof(id));
+
+        var response = await _client.PostAsync<AnalysisObject>($"/files/{id}/analyse", new { }, cancellationToken).ConfigureAwait(false);
+        return response.Data ?? new AnalysisObject();
     }
 }
