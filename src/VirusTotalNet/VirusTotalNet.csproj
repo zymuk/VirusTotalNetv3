@@ -8,7 +8,7 @@
     <AssemblyName>VirusTotalNet.v3</AssemblyName>
     <RootNamespace>VirusTotalNet.v3</RootNamespace>
     <PackageId>VirusTotalNet.v3</PackageId>
-    <Version>0.3.0-alpha</Version>
+    <Version>0.4.0-beta</Version>
     <Authors>Tran T. Ngoc</Authors>
     <Description>A modern .NET client for the VirusTotal API v3. Strongly-typed yet lossless, rate-limit aware, zero external dependencies on .NET 8+.</Description>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
@@ -16,6 +16,7 @@
     <RepositoryUrl>https://github.com/zymuk/VirusTotalNetv3.git</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
     <NoWarn>$(NoWarn.Replace(';1591', '').Replace('1591', ''))</NoWarn>
   </PropertyGroup>
 
@@ -26,6 +27,10 @@
 
   <ItemGroup>
     <InternalsVisibleTo Include="VirusTotalNet.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\..\README.md" Pack="true" PackagePath="\" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
