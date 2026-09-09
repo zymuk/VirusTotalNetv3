@@ -21,6 +21,7 @@
 * `VirusTotal` facade — v2-style one-liners: construct with an API key, call `GetFileReportAsync(hash)` or `GetFileReportAsync(byte[])` (computes SHA-256, and auto-scans/waits when the file is not yet known)
 * `IUrlClient`/`UrlClient` — `ScanUrlAsync`, `GetUrlAsync` (accepts the URL or its base64url id), `AnalyseUrlAsync` (rescan), plus `EncodeUrlId` for id encoding
 * `IDomainClient`/`DomainClient` — `GetDomainAsync`, `AnalyseDomainAsync` (rescan), `GetResolutionsAsync` / `GetSubdomainsAsync` (cursor-paginated `VtCollection`)
+* `IIpClient`/`IpClient` — `GetIpAsync`, `AnalyseIpAsync` (rescan), `GetResolutionsAsync` (cursor-paginated)
 
 ### Examples
 
