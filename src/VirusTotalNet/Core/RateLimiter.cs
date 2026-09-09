@@ -23,8 +23,10 @@ public sealed class RateLimiter
 
     private static DateTimeOffset Now => Clock();
 
+    /// <summary>Creates a rate limiter with the default VirusTotal limits (4 req/min, 500 req/day).</summary>
     public RateLimiter() : this(4, 500) { }
 
+    /// <summary>Creates a rate limiter with explicit per-minute and per-day limits.</summary>
     public RateLimiter(int maxPerMinute, int maxPerDay)
     {
         _maxPerMinute = maxPerMinute;

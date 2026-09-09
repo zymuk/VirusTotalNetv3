@@ -23,6 +23,11 @@ public sealed class VtClient : IVtClient, IDisposable
     private readonly Random _jitter;
     private readonly bool _ownsHttpClient;
 
+    /// <summary>
+    /// Creates a client for the VirusTotal API v3.
+    /// </summary>
+    /// <param name="options">Configuration: API key, rate limits, retry and error-handling behavior.</param>
+    /// <param name="httpClient">Optional pre-configured <see cref="HttpClient"/>; when omitted a new one is owned (and disposed) by the client.</param>
     public VtClient(VirusTotalOptions options, HttpClient? httpClient = null)
     {
         _options = options ?? throw new ArgumentNullException(nameof(options));
@@ -38,8 +43,10 @@ public sealed class VtClient : IVtClient, IDisposable
         _httpClient.Timeout = _options.Timeout;
     }
 
+    /// <inheritdoc />
     public HttpClient Client => _httpClient;
 
+    /// <inheritdoc />
     public async Task<VtResponse<T>> GetAsync<T>(string uri, CancellationToken cancellationToken = default)
     {
         return await SendWithRetryAsync(
@@ -49,6 +56,7 @@ public sealed class VtClient : IVtClient, IDisposable
     }
 
 #if NET8_0_OR_GREATER
+    /// <inheritdoc />
     public async Task<VtResponse<T>> GetAsync<T>(string uri, JsonTypeInfo<VtResponse<T>> typeInfo, CancellationToken cancellationToken = default)
     {
         return await SendWithRetryAsync(
@@ -58,6 +66,7 @@ public sealed class VtClient : IVtClient, IDisposable
     }
 #endif
 
+    /// <inheritdoc />
     public async Task<System.IO.Stream> GetStreamAsync(string uri, CancellationToken cancellationToken = default)
     {
         var attempt = 0;
@@ -115,6 +124,7 @@ public sealed class VtClient : IVtClient, IDisposable
         return new VtHttpException(response.StatusCode, $"HTTP {(int)response.StatusCode} {response.ReasonPhrase}");
     }
 
+    /// <inheritdoc />
     public async Task<VtResponse<T>> PostAsync<T>(string uri, object body, CancellationToken cancellationToken = default)
     {
         return await SendWithRetryAsync(
@@ -127,6 +137,7 @@ public sealed class VtClient : IVtClient, IDisposable
             cancellationToken).ConfigureAwait(false);
     }
 
+    /// <inheritdoc />
     public async Task<VtResponse<T>> PostAsync<T>(string uri, HttpContent content, CancellationToken cancellationToken = default)
     {
         return await SendWithRetryAsync(
@@ -135,11 +146,13 @@ public sealed class VtClient : IVtClient, IDisposable
             cancellationToken).ConfigureAwait(false);
     }
 
+    /// <inheritdoc />
     public Task<VtResult<T>> TryGetAsync<T>(string uri, CancellationToken cancellationToken = default)
         => SendWithResultAsync<T>(
             () => new HttpRequestMessage(HttpMethod.Get, BuildRelativeUri(uri)),
             cancellationToken);
 
+    /// <inheritdoc />
     public Task<VtResult<T>> TryPostAsync<T>(string uri, object body, CancellationToken cancellationToken = default)
         => SendWithResultAsync<T>(
             () =>
@@ -149,6 +162,7 @@ public sealed class VtClient : IVtClient, IDisposable
             },
             cancellationToken);
 
+    /// <inheritdoc />
     public Task<VtResult<T>> TryPostAsync<T>(string uri, HttpContent content, CancellationToken cancellationToken = default)
         => SendWithResultAsync<T>(
             () => new HttpRequestMessage(HttpMethod.Post, BuildRelativeUri(uri)) { Content = content },
@@ -466,6 +480,7 @@ public sealed class VtClient : IVtClient, IDisposable
         return new Uri(trimmed, UriKind.Relative);
     }
 
+    /// <summary>Releases the underlying <see cref="HttpClient"/> when this instance created it.</summary>
     public void Dispose()
     {
         if (_ownsHttpClient)

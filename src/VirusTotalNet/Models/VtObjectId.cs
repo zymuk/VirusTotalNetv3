@@ -7,6 +7,7 @@ namespace VirusTotalNet.v3.Models;
 /// </summary>
 public sealed class VtObjectId
 {
+    /// <summary>Creates a descriptor pair from an object type and identifier.</summary>
     public VtObjectId(string? type, string? id)
     {
         Type = type;

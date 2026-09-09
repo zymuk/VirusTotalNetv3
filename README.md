@@ -4,8 +4,6 @@
 
 ### Features
 
-*- Work in progress - files/analyses layer underway.*
-
 * Zero external dependencies; targets `net8.0` (trimmable, AOT-compatible) and `netstandard2.0`, packaged as `VirusTotalNet.v3`
 * Single envelope `VtResponse<T>` with lossless `JsonExtensionData` and tolerant JSON converters (string-typed numbers, Unix timestamps, crammed dates) for every endpoint
 * `VtClient` — `x-apikey` auth, base URL, AOT-safe overloads, shared rate limiter (4 req/min & 500 req/day), retry with exponential backoff + jitter; maps `error.code` to a typed exception hierarchy (`ThrowOnError` toggle)
@@ -20,7 +18,7 @@
 
 ### Examples
 
-*- Work in progress - two runnable API examples (EICAR lookup, upload-and-fetch) shipped.*
+Every example below is shipped and runnable in the `VirusTotalNet.Examples` console project (`VT_API_KEY` required).
 
 The classic EICAR "seen before?" check, one line like the v2 library. Set `VT_API_KEY` and run the console project:
 
@@ -91,5 +89,29 @@ await foreach (UrlObject url in vt.Relationships.TraverseAsync<UrlObject>("files
 ```
 
 M3 clients (`UrlClient`, `DomainClient`, `IpClient`, `FeedbackClient`) target a specific object type you already know. M4 navigation works off an object in hand — no need to remember endpoint paths — and shares one rate limiter plus memoized first pages so traversals stay budget-friendly.
+
+Run an intelligence search and handle errors without try/catch — `ThrowOnError` stays on by default, or switch to Result-style:
+
+```csharp
+using VirusTotalNet.v3;
+using VirusTotalNet.v3.Clients;
+
+var vt = new VirusTotal("YOUR_API_KEY");
+
+// M5 — /intelligence/search, cursor-paged like every collection.
+var search = new SearchClient(vt.Client);
+VtCollection<VtSearchObject> hits = await search.SearchAsync("type:domain tags:phishing", descriptorsOnly: true);
+foreach (VtSearchObject hit in hits.Items)
+    Console.WriteLine($"{hit.Type} / {hit.Id}");
+
+// Result-style: TryGetAsync/TryPostAsync never throw for API errors.
+VtResult<FileObject> lookup = await vt.Client.TryGetAsync<FileObject>("/files/unknown-hash");
+if (lookup.IsSuccess)
+    Console.WriteLine("File found: " + lookup.Value!.Id);
+else
+    Console.WriteLine($"HTTP {(int)lookup.Error!.StatusCode!}: {lookup.Error.Code} — {lookup.Error.Message}");
+```
+
+`SearchAsync` mirrors the other collection clients (`VtCollection<T>` with `Count`/`NextCursor`); `TryGetAsync`/`TryPostAsync` return a `VtResult<T>` discriminated union and still apply the shared rate limiter and retry policy.
 
 Features and examples in this README only appear once they are implemented and tested.

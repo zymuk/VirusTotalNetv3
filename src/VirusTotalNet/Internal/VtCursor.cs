@@ -5,6 +5,7 @@ namespace VirusTotalNet.v3.Internal;
 /// <summary>Extracts a pagination cursor from a <c>links.next</c> URL, shared by collection and relationship views.</summary>
 internal static class VtCursor
 {
+    /// <summary>Returns the <c>cursor</c> query parameter from a <c>links.next</c> URL, or <c>null</c> when absent.</summary>
     public static string? Next(string? link)
     {
         if (string.IsNullOrEmpty(link) || !Uri.TryCreate(link, UriKind.Absolute, out var uri))

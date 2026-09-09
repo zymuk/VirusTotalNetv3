@@ -13,6 +13,7 @@ internal sealed class YearMonthDayConverter : JsonConverter<DateTime>
 {
     private static readonly string[] Formats = { "yyyyMMdd", "yyyy-MM-dd" };
 
+    /// <inheritdoc />
     public override DateTime Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
         switch (reader.TokenType)
@@ -30,6 +31,7 @@ internal sealed class YearMonthDayConverter : JsonConverter<DateTime>
         }
     }
 
+    /// <inheritdoc />
     public override void Write(Utf8JsonWriter writer, DateTime value, JsonSerializerOptions options)
         => writer.WriteStringValue(value.ToString("yyyyMMdd", CultureInfo.InvariantCulture));
 }

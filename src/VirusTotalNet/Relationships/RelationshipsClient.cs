@@ -85,8 +85,13 @@ public sealed class RelationshipsClient : IRelationshipsClient
 {
     private sealed class CachedPage
     {
+        /// <summary>Related objects on this page as raw JSON elements.</summary>
         public List<JsonElement> Items { get; set; } = new();
+
+        /// <summary>Total element count reported by the API, when known.</summary>
         public long? Count { get; set; }
+
+        /// <summary>URL of the next page, if any.</summary>
         public string? NextLink { get; set; }
     }
 

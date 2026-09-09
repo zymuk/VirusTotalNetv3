@@ -11,6 +11,7 @@ namespace VirusTotalNet.v3.Internal.Json;
 /// </summary>
 internal sealed class TolerantStringConverter : JsonConverter<string?>
 {
+    /// <inheritdoc />
     public override string? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
         switch (reader.TokenType)
@@ -31,6 +32,7 @@ internal sealed class TolerantStringConverter : JsonConverter<string?>
         }
     }
 
+    /// <inheritdoc />
     public override void Write(Utf8JsonWriter writer, string? value, JsonSerializerOptions options)
     {
         if (value is null)

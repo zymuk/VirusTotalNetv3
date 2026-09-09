@@ -11,6 +11,7 @@ namespace VirusTotalNet.v3.Internal.Json;
 /// </summary>
 internal sealed class UnixTimeSecondsConverter : JsonConverter<DateTimeOffset>
 {
+    /// <inheritdoc />
     public override DateTimeOffset Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
         switch (reader.TokenType)
@@ -28,6 +29,7 @@ internal sealed class UnixTimeSecondsConverter : JsonConverter<DateTimeOffset>
         }
     }
 
+    /// <inheritdoc />
     public override void Write(Utf8JsonWriter writer, DateTimeOffset value, JsonSerializerOptions options)
         => writer.WriteNumberValue(value.ToUnixTimeSeconds());
 }

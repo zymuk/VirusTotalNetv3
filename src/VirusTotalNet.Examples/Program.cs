@@ -89,3 +89,19 @@ await foreach (var url in vt.Relationships.TraverseAsync<UrlObject>("files", fil
         break;
 }
 Console.WriteLine($"traversed contacted_urls: {total} items (bounded)");
+
+Console.WriteLine();
+Console.WriteLine("=== M5: intelligence search + result-style (no-throw) ===");
+
+var search = new SearchClient(vt.Client);
+var results = await search.SearchAsync("type:domain tags:phishing", descriptorsOnly: true);
+Console.WriteLine($"Search: {results.Count} matches on this page — first few:");
+foreach (var hit in results.Items.Take(5))
+    Console.WriteLine($"  {hit.Type} / {hit.Id}");
+
+// Result-style: never throws for API errors, errors come back as VtResult.
+var lookup = await vt.Client.TryGetAsync<FileObject>("/files/definitely-not-a-real-hash");
+if (lookup.IsSuccess)
+    Console.WriteLine("File found: " + lookup.Value!.Id);
+else
+    Console.WriteLine($"Lookup failed (HTTP {(int)lookup.Error!.StatusCode!}): {lookup.Error.Code} — {lookup.Error.Message}");

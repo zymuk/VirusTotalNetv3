@@ -16,6 +16,7 @@
     <RepositoryUrl>https://github.com/zymuk/VirusTotalNetv3.git</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn.Replace(';1591', '').Replace('1591', ''))</NoWarn>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(TargetFramework)' == 'net8.0'">
