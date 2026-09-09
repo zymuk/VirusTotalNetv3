@@ -17,6 +17,7 @@
 * Exception hierarchy `VirusTotalException` → `VtHttpException` → concrete (`NotFound`, `QuotaExceeded`, `Authentication`, `RateLimit`, `InvalidRequest`, `Server`); maps API `error.code` + HTTP status to the right exception, `ThrowOnError` toggles throwing vs. returning the error envelope
 * `IFileClient`/`FileClient` — `ScanFileAsync` uploads a file as multipart/form-data (`POST /files`, ≤ 32 MB enforced) and returns an `AnalysisObject` with typed `AnalysisAttributes` (status, date, stats); `ScanLargeFileAsync` handles files over 32 MB via the pre-signed upload URL; `GetFileAsync` retrieves the report for any MD5/SHA-1/SHA-256 (`GET /files/{id}`); `AnalyseFileAsync` rescans a known file (`POST /files/{id}/analyse`); `DownloadAsync`/`GetDownloadUrlAsync` fetch a file's content or a pre-signed URL
 * `VtClient.GetStreamAsync` — streaming GET for binary payloads, sharing the same rate limiter and retry policy
+* `IAnalysisClient`/`AnalysisClient` — `GetAnalysisAsync` and `WaitForCompletionAsync` (respects the shared rate limiter, configurable poll interval, `AnalysisStatus` constants)
 
 ### Examples
 
