@@ -22,6 +22,7 @@
 * `IUrlClient`/`UrlClient` — `ScanUrlAsync`, `GetUrlAsync` (accepts the URL or its base64url id), `AnalyseUrlAsync` (rescan), plus `EncodeUrlId` for id encoding
 * `IDomainClient`/`DomainClient` — `GetDomainAsync`, `AnalyseDomainAsync` (rescan), `GetResolutionsAsync` / `GetSubdomainsAsync` (cursor-paginated `VtCollection`)
 * `IIpClient`/`IpClient` — `GetIpAsync`, `AnalyseIpAsync` (rescan), `GetResolutionsAsync` (cursor-paginated)
+* `IFeedbackClient`/`FeedbackClient` — comments & votes on any object type: `GetCommentsAsync`, `AddCommentAsync`, `GetVotesAsync`, `AddVoteAsync` (cursor-paginated lists; `VtObjectType` constants for files/urls/domains/ip_addresses)
 
 ### Examples
 
