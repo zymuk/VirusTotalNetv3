@@ -51,8 +51,9 @@ public sealed class VirusTotal : IDisposable
         Relationships = new RelationshipsClient(_client);
     }
 
-    // Test seam: lets tests supply a VtClient wired to a stubbed HTTP handler.
-    internal VirusTotal(IVtClient client)
+    /// <summary>Creates the facade sharing an existing client without owning its lifecycle.</summary>
+    /// <param name="client">An existing client; the caller is responsible for disposing it.</param>
+    public VirusTotal(IVtClient client)
     {
         _client = client ?? throw new ArgumentNullException(nameof(client));
         _ownsClient = false;

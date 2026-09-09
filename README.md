@@ -15,6 +15,7 @@
 * Search — `/intelligence/search` via `ISearchClient`/`SearchClient` (cursor pagination, `descriptors_only` mode)
 * Error handling — `ThrowOnError=false` returns the error envelope; Result-style `VtResult<T>` through `IVtClient.Try*`, so checks never need a try/catch
 * `VirusTotal` facade — v2-style one-liners: `GetFileReportAsync(hash)` / `GetFileReportAsync(bytes)`, auto-scans and waits when the file is unknown
+* DI — optional `VirusTotalNet.v3.DependencyInjection` package: `AddVirusTotal` (options delegate or `IConfiguration` section) registers the client, all module clients and the facade behind one shared `IVtClient`
 
 ### Examples
 
@@ -113,5 +114,27 @@ else
 ```
 
 `SearchAsync` mirrors the other collection clients (`VtCollection<T>` with `Count`/`NextCursor`); `TryGetAsync`/`TryPostAsync` return a `VtResult<T>` discriminated union and still apply the shared rate limiter and retry policy.
+
+M6 — optional package `VirusTotalNet.v3.DependencyInjection` wires everything into your DI container:
+
+```csharp
+using Microsoft.Extensions.DependencyInjection;
+using VirusTotalNet.v3.Clients;
+using VirusTotalNet.v3.DependencyInjection;
+using VirusTotalNet.v3.Models;
+
+var services = new ServiceCollection();
+
+// From a delegate...
+services.AddVirusTotal(options => options.ApiKey = "YOUR_API_KEY");
+// ...or from an IConfiguration section named "VirusTotal".
+// services.AddVirusTotal(configuration);
+
+using var provider = services.BuildServiceProvider();
+
+// All clients share one IVtClient (rate limiter, retry, api key).
+var fileClient = provider.GetRequiredService<IFileClient>();
+FileObject report = await fileClient.GetFileAsync("sha256_of_the_file");
+```
 
 Features and examples in this README only appear once they are implemented and tested.
