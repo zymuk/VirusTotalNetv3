@@ -54,14 +54,44 @@ public interface IVtClient
     Task<VtResult<T>> TryPostAsync<T>(string uri, object body, CancellationToken cancellationToken = default);
 
 /// <summary>
-        /// Result-style POST with raw <see cref="HttpContent"/>; see <see cref="TryGetAsync{T}"/> for semantics.
+        /// Performs a POST request with raw <see cref="HttpContent"/>; see <see cref="TryGetAsync{T}"/> for semantics.
         /// </summary>
         Task<VtResult<T>> TryPostAsync<T>(string uri, HttpContent content, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Performs a PATCH request with a JSON body and deserialises the response envelope.
+        /// </summary>
+        Task<VtResponse<T>> PatchAsync<T>(string uri, object body, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Performs a PATCH request with a raw <see cref="HttpContent"/> body and deserialises the response envelope.
+        /// </summary>
+        Task<VtResponse<T>> PatchAsync<T>(string uri, HttpContent content, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Result-style PATCH with a JSON body; see <see cref="TryGetAsync{T}"/> for semantics.
+        /// </summary>
+        Task<VtResult<T>> TryPatchAsync<T>(string uri, object body, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Result-style PATCH with raw <see cref="HttpContent"/>; see <see cref="TryGetAsync{T}"/> for semantics.
+        /// </summary>
+        Task<VtResult<T>> TryPatchAsync<T>(string uri, HttpContent content, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Performs a DELETE request and deserialises the response envelope.
         /// </summary>
         Task<VtResponse<T>> DeleteAsync<T>(string uri, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Performs a DELETE request with a JSON body and deserialises the response envelope.
+        /// </summary>
+        Task<VtResponse<T>> DeleteAsync<T>(string uri, object body, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Performs a DELETE request with a raw <see cref="HttpContent"/> body and deserialises the response envelope.
+        /// </summary>
+        Task<VtResponse<T>> DeleteAsync<T>(string uri, HttpContent content, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Result-style DELETE that never throws for API errors: returns a <see cref="VtResult{T}"/>
@@ -70,4 +100,14 @@ public interface IVtClient
         /// is ignored.
         /// </summary>
         Task<VtResult<T>> TryDeleteAsync<T>(string uri, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Result-style DELETE with a JSON body; see <see cref="TryDeleteAsync{T}(string, CancellationToken)"/> for semantics.
+        /// </summary>
+        Task<VtResult<T>> TryDeleteAsync<T>(string uri, object body, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Result-style DELETE with raw <see cref="HttpContent"/>; see <see cref="TryDeleteAsync{T}(string, CancellationToken)"/> for semantics.
+        /// </summary>
+        Task<VtResult<T>> TryDeleteAsync<T>(string uri, HttpContent content, CancellationToken cancellationToken = default);
 }

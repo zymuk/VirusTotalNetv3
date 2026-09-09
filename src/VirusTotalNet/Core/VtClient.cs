@@ -156,9 +156,85 @@ public sealed class VtClient : IVtClient, IDisposable
         }
 
         /// <inheritdoc />
+        public async Task<VtResponse<T>> DeleteAsync<T>(string uri, object body, CancellationToken cancellationToken = default)
+        {
+            return await SendWithRetryAsync(
+                () =>
+                {
+                    var content = new StringContent(SerializeBody(body), Encoding.UTF8, "application/json");
+                    return new HttpRequestMessage(HttpMethod.Delete, BuildRelativeUri(uri)) { Content = content };
+                },
+                DeserializeResponse<T>,
+                cancellationToken).ConfigureAwait(false);
+        }
+
+        /// <inheritdoc />
+        public async Task<VtResponse<T>> DeleteAsync<T>(string uri, HttpContent content, CancellationToken cancellationToken = default)
+        {
+            return await SendWithRetryAsync(
+                () => new HttpRequestMessage(HttpMethod.Delete, BuildRelativeUri(uri)) { Content = content },
+                DeserializeResponse<T>,
+                cancellationToken).ConfigureAwait(false);
+        }
+
+        /// <inheritdoc />
         public Task<VtResult<T>> TryDeleteAsync<T>(string uri, CancellationToken cancellationToken = default)
             => SendWithResultAsync<T>(
                 () => new HttpRequestMessage(HttpMethod.Delete, BuildRelativeUri(uri)),
+                cancellationToken);
+
+        /// <inheritdoc />
+        public Task<VtResult<T>> TryDeleteAsync<T>(string uri, object body, CancellationToken cancellationToken = default)
+            => SendWithResultAsync<T>(
+                () =>
+                {
+                    var content = new StringContent(SerializeBody(body), Encoding.UTF8, "application/json");
+                    return new HttpRequestMessage(HttpMethod.Delete, BuildRelativeUri(uri)) { Content = content };
+                },
+                cancellationToken);
+
+        /// <inheritdoc />
+        public Task<VtResult<T>> TryDeleteAsync<T>(string uri, HttpContent content, CancellationToken cancellationToken = default)
+            => SendWithResultAsync<T>(
+                () => new HttpRequestMessage(HttpMethod.Delete, BuildRelativeUri(uri)) { Content = content },
+                cancellationToken);
+
+        /// <inheritdoc />
+        public async Task<VtResponse<T>> PatchAsync<T>(string uri, object body, CancellationToken cancellationToken = default)
+        {
+            return await SendWithRetryAsync(
+                () =>
+                {
+                    var content = new StringContent(SerializeBody(body), Encoding.UTF8, "application/json");
+                    return new HttpRequestMessage(new HttpMethod("PATCH"), BuildRelativeUri(uri)) { Content = content };
+                },
+                DeserializeResponse<T>,
+                cancellationToken).ConfigureAwait(false);
+        }
+
+        /// <inheritdoc />
+        public async Task<VtResponse<T>> PatchAsync<T>(string uri, HttpContent content, CancellationToken cancellationToken = default)
+        {
+            return await SendWithRetryAsync(
+                () => new HttpRequestMessage(new HttpMethod("PATCH"), BuildRelativeUri(uri)) { Content = content },
+                DeserializeResponse<T>,
+                cancellationToken).ConfigureAwait(false);
+        }
+
+        /// <inheritdoc />
+        public Task<VtResult<T>> TryPatchAsync<T>(string uri, object body, CancellationToken cancellationToken = default)
+            => SendWithResultAsync<T>(
+                () =>
+                {
+                    var content = new StringContent(SerializeBody(body), Encoding.UTF8, "application/json");
+                    return new HttpRequestMessage(new HttpMethod("PATCH"), BuildRelativeUri(uri)) { Content = content };
+                },
+                cancellationToken);
+
+        /// <inheritdoc />
+        public Task<VtResult<T>> TryPatchAsync<T>(string uri, HttpContent content, CancellationToken cancellationToken = default)
+            => SendWithResultAsync<T>(
+                () => new HttpRequestMessage(new HttpMethod("PATCH"), BuildRelativeUri(uri)) { Content = content },
                 cancellationToken);
 
         /// <inheritdoc />
