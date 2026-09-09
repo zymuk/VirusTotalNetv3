@@ -309,4 +309,65 @@ Assert.Contains("name=file", handler.LastRequestBody);
 
         Assert.Empty(handler.Requests);
     }
+
+    [Fact]
+    public async Task ScanLargeFile_FetchesUploadUrl_ThenPostsMultipartToIt()
+    {
+        var handler = new StubHttpMessageHandler(request =>
+        {
+            if (request.Method == HttpMethod.Get)
+                return StubHttpMessageHandler.Json(HttpStatusCode.OK,
+                    """{ "data": "https://upload.example.com/uploads/u1" }""");
+
+            return StubHttpMessageHandler.Json(HttpStatusCode.OK,
+                """{ "data": { "type": "analysis", "id": "analysis-big" } }""");
+        });
+
+        using var vt = new VtClient(Options(), new HttpClient(handler));
+        var client = new FileClient(vt);
+
+        await using var stream = new MemoryStream(Encoding.UTF8.GetBytes("big-file-bytes"));
+        var analysis = await client.ScanLargeFileAsync(stream, "big.rar");
+
+        Assert.Equal("analysis", analysis!.Type);
+        Assert.Equal("analysis-big", analysis.Id);
+
+        Assert.Equal(2, handler.Requests.Count);
+
+        Assert.Equal(HttpMethod.Get, handler.Requests[0].Method);
+        Assert.Equal(VirusTotalOptions.DefaultBaseAddress + "files/upload_url", handler.Requests[0].RequestUri!.ToString());
+
+        Assert.Equal(HttpMethod.Post, handler.Requests[1].Method);
+        Assert.Equal("https://upload.example.com/uploads/u1", handler.Requests[1].RequestUri!.ToString());
+        Assert.Equal("multipart/form-data", handler.Requests[1].Content!.Headers.ContentType!.MediaType);
+        Assert.Contains("name=file", handler.LastRequestBody);
+        Assert.Contains("filename=big.rar", handler.LastRequestBody);
+    }
+
+    [Fact]
+    public async Task ScanLargeFile_NoUploadUrl_Throws()
+    {
+        var handler = new StubHttpMessageHandler(
+            StubHttpMessageHandler.Json(HttpStatusCode.OK, """{ "data": null }"""));
+
+        using var vt = new VtClient(Options(), new HttpClient(handler));
+        var client = new FileClient(vt);
+
+        await using var stream = new MemoryStream(Encoding.UTF8.GetBytes("bytes"));
+        await Assert.ThrowsAsync<InvalidOperationException>(
+            () => client.ScanLargeFileAsync(stream, "big.rar"));
+    }
+
+    [Fact]
+    public async Task ScanLargeFile_NullStream_Throws()
+    {
+        var handler = new StubHttpMessageHandler(
+            StubHttpMessageHandler.Json(HttpStatusCode.OK, """{ "data": null }"""));
+
+        using var vt = new VtClient(Options(), new HttpClient(handler));
+        var client = new FileClient(vt);
+
+        await Assert.ThrowsAsync<ArgumentNullException>(
+            () => client.ScanLargeFileAsync(null!, "big.rar"));
+    }
 }

@@ -326,6 +326,9 @@ public sealed class VtClient : IVtClient, IDisposable
 
     private static Uri BuildRelativeUri(string uri)
     {
+        if (Uri.TryCreate(uri, UriKind.Absolute, out var absolute))
+            return absolute;
+
         var trimmed = uri.StartsWith("/", StringComparison.Ordinal) ? uri.Substring(1) : uri;
         return new Uri(trimmed, UriKind.Relative);
     }

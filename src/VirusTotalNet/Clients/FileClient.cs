@@ -23,6 +23,16 @@ public interface IFileClient
     Task<AnalysisObject> ScanFileAsync(Stream stream, string? fileName = null, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Uploads a file larger than <see cref="FileClient.MaxScanSize"/> using a pre-signed upload URL:
+    /// fetches <c>GET /files/upload_url</c> then multipart-POSTs the file to that URL.
+    /// </summary>
+    /// <param name="stream">The file content to scan (typically larger than 32 MiB).</param>
+    /// <param name="fileName">Name sent to the API; often used to infer the file type.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The created analysis object; poll its id to retrieve the completed report.</returns>
+    Task<AnalysisObject> ScanLargeFileAsync(Stream stream, string? fileName = null, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Retrieves the report of a file identified by its MD5, SHA-1 or SHA-256 digest (<c>GET /files/{id}</c>).
     /// </summary>
     /// <param name="id">MD5, SHA-1 or SHA-256 digest of the file.</param>
@@ -75,15 +85,36 @@ public sealed class FileClient : IFileClient
             throw new ArgumentNullException(nameof(stream));
 
         if (stream.CanSeek && stream.Length > MaxScanSize)
-            throw new ArgumentOutOfRangeException(nameof(stream), $"Files larger than {MaxScanSize} bytes cannot be uploaded directly; use the upload URL endpoint instead.");
+            throw new ArgumentOutOfRangeException(nameof(stream), $"Files larger than {MaxScanSize} bytes cannot be uploaded directly; use {nameof(ScanLargeFileAsync)} instead.");
 
-        using var content = new MultipartFormDataContent();
-        using var fileContent = new StreamContent(stream);
-        fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/octet-stream");
-        content.Add(fileContent, "file", fileName ?? "file");
+        using var content = BuildMultipartContent(stream, fileName);
 
         var response = await _client.PostAsync<AnalysisObject>("/files", content, cancellationToken).ConfigureAwait(false);
         return response.Data ?? new AnalysisObject();
+    }
+
+    /// <inheritdoc />
+    public async Task<AnalysisObject> ScanLargeFileAsync(Stream stream, string? fileName = null, CancellationToken cancellationToken = default)
+    {
+        if (stream is null)
+            throw new ArgumentNullException(nameof(stream));
+
+        var uploadUrlResponse = await _client.GetAsync<string>("/files/upload_url", cancellationToken).ConfigureAwait(false);
+        var uploadUrl = uploadUrlResponse.Data ?? throw new InvalidOperationException("The API returned no upload URL.");
+
+        using var content = BuildMultipartContent(stream, fileName);
+
+        var response = await _client.PostAsync<AnalysisObject>(uploadUrl, content, cancellationToken).ConfigureAwait(false);
+        return response.Data ?? new AnalysisObject();
+    }
+
+    private static MultipartFormDataContent BuildMultipartContent(Stream stream, string? fileName)
+    {
+        var content = new MultipartFormDataContent();
+        var fileContent = new StreamContent(stream);
+        fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/octet-stream");
+        content.Add(fileContent, "file", fileName ?? "file");
+        return content;
     }
 
     /// <inheritdoc />
