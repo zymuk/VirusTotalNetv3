@@ -74,7 +74,7 @@ public sealed class UrlClient : IUrlClient
             new[] { new KeyValuePair<string, string>("url", url) });
 
         var response = await _client.PostAsync<AnalysisObject>("/urls", content, cancellationToken).ConfigureAwait(false);
-        return response.Data ?? new AnalysisObject();
+        return response.EnsureSuccess().Data ?? new AnalysisObject();
     }
 
     /// <inheritdoc />
@@ -82,7 +82,7 @@ public sealed class UrlClient : IUrlClient
     {
         var id = ResolveId(urlOrId);
         var response = await _client.GetAsync<UrlObject>($"/urls/{id}", cancellationToken).ConfigureAwait(false);
-        return response.Data ?? new UrlObject();
+        return response.EnsureSuccess().Data ?? new UrlObject();
     }
 
     /// <inheritdoc />
@@ -90,7 +90,7 @@ public sealed class UrlClient : IUrlClient
     {
         var id = ResolveId(urlOrId);
         var response = await _client.PostAsync<AnalysisObject>($"/urls/{id}/analyse", new { }, cancellationToken).ConfigureAwait(false);
-        return response.Data ?? new AnalysisObject();
+        return response.EnsureSuccess().Data ?? new AnalysisObject();
     }
 
     private static string ResolveId(string urlOrId)

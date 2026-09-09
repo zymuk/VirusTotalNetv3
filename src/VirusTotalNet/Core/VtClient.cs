@@ -135,6 +135,115 @@ public sealed class VtClient : IVtClient, IDisposable
             cancellationToken).ConfigureAwait(false);
     }
 
+    public Task<VtResult<T>> TryGetAsync<T>(string uri, CancellationToken cancellationToken = default)
+        => SendWithResultAsync<T>(
+            () => new HttpRequestMessage(HttpMethod.Get, BuildRelativeUri(uri)),
+            cancellationToken);
+
+    public Task<VtResult<T>> TryPostAsync<T>(string uri, object body, CancellationToken cancellationToken = default)
+        => SendWithResultAsync<T>(
+            () =>
+            {
+                var content = new StringContent(SerializeBody(body), Encoding.UTF8, "application/json");
+                return new HttpRequestMessage(HttpMethod.Post, BuildRelativeUri(uri)) { Content = content };
+            },
+            cancellationToken);
+
+    public Task<VtResult<T>> TryPostAsync<T>(string uri, HttpContent content, CancellationToken cancellationToken = default)
+        => SendWithResultAsync<T>(
+            () => new HttpRequestMessage(HttpMethod.Post, BuildRelativeUri(uri)) { Content = content },
+            cancellationToken);
+
+    private async Task<VtResult<T>> SendWithResultAsync<T>(Func<HttpRequestMessage> requestFactory, CancellationToken cancellationToken)
+    {
+        var attempt = 0;
+        while (true)
+        {
+            await _rateLimiter.WaitUntilAllowedAsync(cancellationToken).ConfigureAwait(false);
+
+            HttpResponseMessage? response = null;
+            try
+            {
+                using var request = requestFactory();
+                response = await _httpClient.SendAsync(request, cancellationToken).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                throw;
+            }
+            catch (Exception ex) when (IsRetryableNetworkError(ex) && ShouldRetry(attempt))
+            {
+                response?.Dispose();
+                await BackoffDelayAsync(attempt, retryAfter: null, cancellationToken).ConfigureAwait(false);
+                attempt++;
+                continue;
+            }
+
+            if (IsSuccessWithRetry(response))
+            {
+                var result = await TryDeserializeAsync<T>(response, cancellationToken).ConfigureAwait(false);
+                response.Dispose();
+                return result ?? VtResult<T>.Success(default);
+            }
+
+            if (IsRetryableStatus(response) && ShouldRetry(attempt))
+            {
+                var retryAfter = GetRetryAfter(response);
+                response.Dispose();
+                await BackoffDelayAsync(attempt, retryAfter, cancellationToken).ConfigureAwait(false);
+                attempt++;
+                continue;
+            }
+
+            var error = await TryReadErrorAsync(response).ConfigureAwait(false);
+            response.Dispose();
+            return VtResult<T>.Failure(error);
+        }
+    }
+
+    private async Task<VtResult<T>?> TryDeserializeAsync<T>(HttpResponseMessage response, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var stream = await ReadContentStream(response).ConfigureAwait(false);
+            var envelope = await DeserializeAsync<T>(stream, cancellationToken).ConfigureAwait(false);
+            if (envelope is null)
+                return null;
+
+            if (envelope.Error != null)
+                envelope.Error.StatusCode ??= response.StatusCode;
+            return VtResult<T>.From(envelope);
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    private static async Task<VtError> TryReadErrorAsync(HttpResponseMessage response)
+    {
+        try
+        {
+            var stream = await ReadContentStream(response).ConfigureAwait(false);
+            var envelope = await DeserializeAsync<JsonElement>(stream, default).ConfigureAwait(false);
+            if (envelope?.Error != null)
+            {
+                envelope.Error.StatusCode ??= response.StatusCode;
+                return envelope.Error;
+            }
+        }
+        catch
+        {
+        }
+
+        return new VtError
+        {
+            StatusCode = response.StatusCode,
+            Code = null,
+            Message = $"HTTP {(int)response.StatusCode} {response.ReasonPhrase}"
+        };
+    }
+
     private async Task<VtResponse<T>> SendWithRetryAsync<T>(
         Func<HttpRequestMessage> requestFactory,
         Func<HttpResponseMessage, CancellationToken, Task<VtResponse<T>>> deserialize,
@@ -230,8 +339,12 @@ public sealed class VtClient : IVtClient, IDisposable
             var stream = await ReadContentStream(response).ConfigureAwait(false);
             var envelope = await DeserializeAsync<T>(stream, cancellationToken).ConfigureAwait(false);
 
-            if (envelope?.Error != null && _options.ThrowOnError)
-                throw MapErrorToException(envelope.Error, response.StatusCode);
+            if (envelope?.Error != null)
+            {
+                envelope.Error.StatusCode ??= response.StatusCode;
+                if (_options.ThrowOnError)
+                    throw MapErrorToException(envelope.Error, response.StatusCode);
+            }
 
             return envelope ?? new VtResponse<T>();
         }
@@ -246,10 +359,18 @@ public sealed class VtClient : IVtClient, IDisposable
         {
         }
 
-        if (errorEnvelope?.Error != null)
-            throw MapErrorToException(errorEnvelope.Error, response.StatusCode);
+        if (_options.ThrowOnError)
+        {
+            if (errorEnvelope?.Error != null)
+                throw MapErrorToException(errorEnvelope.Error, response.StatusCode);
 
-        throw new VtHttpException(response.StatusCode, $"HTTP {(int)response.StatusCode} {response.ReasonPhrase}");
+            throw new VtHttpException(response.StatusCode, $"HTTP {(int)response.StatusCode} {response.ReasonPhrase}");
+        }
+
+        errorEnvelope ??= new VtResponse<T>();
+        errorEnvelope.Error ??= new VtError { StatusCode = response.StatusCode, Message = $"HTTP {(int)response.StatusCode} {response.ReasonPhrase}" };
+        errorEnvelope.Error.StatusCode ??= response.StatusCode;
+        return errorEnvelope;
     }
 
 #if NET8_0_OR_GREATER
@@ -260,8 +381,12 @@ public sealed class VtClient : IVtClient, IDisposable
             var stream = await ReadContentStream(response).ConfigureAwait(false);
             var envelope = await JsonSerializer.DeserializeAsync(stream, typeInfo, cancellationToken).ConfigureAwait(false);
 
-            if (envelope?.Error != null && _options.ThrowOnError)
-                throw MapErrorToException(envelope.Error, response.StatusCode);
+            if (envelope?.Error != null)
+            {
+                envelope.Error.StatusCode ??= response.StatusCode;
+                if (_options.ThrowOnError)
+                    throw MapErrorToException(envelope.Error, response.StatusCode);
+            }
 
             return envelope ?? new VtResponse<T>();
         }
@@ -276,14 +401,22 @@ public sealed class VtClient : IVtClient, IDisposable
         {
         }
 
-        if (errorEnvelope?.Error != null)
-            throw MapErrorToException(errorEnvelope.Error, response.StatusCode);
+        if (_options.ThrowOnError)
+        {
+            if (errorEnvelope?.Error != null)
+                throw MapErrorToException(errorEnvelope.Error, response.StatusCode);
 
-        throw new VtHttpException(response.StatusCode, $"HTTP {(int)response.StatusCode} {response.ReasonPhrase}");
+            throw new VtHttpException(response.StatusCode, $"HTTP {(int)response.StatusCode} {response.ReasonPhrase}");
+        }
+
+        errorEnvelope ??= new VtResponse<T>();
+        errorEnvelope.Error ??= new VtError { StatusCode = response.StatusCode, Message = $"HTTP {(int)response.StatusCode} {response.ReasonPhrase}" };
+        errorEnvelope.Error.StatusCode ??= response.StatusCode;
+        return errorEnvelope;
     }
 #endif
 
-    private static VirusTotalException MapErrorToException(VtError error, HttpStatusCode statusCode)
+    internal static VirusTotalException MapErrorToException(VtError error, HttpStatusCode statusCode)
     {
         var message = error.Message ?? $"API error: {error.Code}";
 

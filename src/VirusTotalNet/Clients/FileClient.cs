@@ -90,7 +90,7 @@ public sealed class FileClient : IFileClient
         using var content = BuildMultipartContent(stream, fileName);
 
         var response = await _client.PostAsync<AnalysisObject>("/files", content, cancellationToken).ConfigureAwait(false);
-        return response.Data ?? new AnalysisObject();
+        return response.EnsureSuccess().Data ?? new AnalysisObject();
     }
 
     /// <inheritdoc />
@@ -100,12 +100,12 @@ public sealed class FileClient : IFileClient
             throw new ArgumentNullException(nameof(stream));
 
         var uploadUrlResponse = await _client.GetAsync<string>("/files/upload_url", cancellationToken).ConfigureAwait(false);
-        var uploadUrl = uploadUrlResponse.Data ?? throw new InvalidOperationException("The API returned no upload URL.");
+        var uploadUrl = uploadUrlResponse.EnsureSuccess().Data ?? throw new InvalidOperationException("The API returned no upload URL.");
 
         using var content = BuildMultipartContent(stream, fileName);
 
         var response = await _client.PostAsync<AnalysisObject>(uploadUrl, content, cancellationToken).ConfigureAwait(false);
-        return response.Data ?? new AnalysisObject();
+        return response.EnsureSuccess().Data ?? new AnalysisObject();
     }
 
     private static MultipartFormDataContent BuildMultipartContent(Stream stream, string? fileName)
@@ -124,7 +124,7 @@ public sealed class FileClient : IFileClient
             throw new ArgumentException("A file digest is required.", nameof(id));
 
         var response = await _client.GetAsync<FileObject>($"/files/{id}", cancellationToken).ConfigureAwait(false);
-        return response.Data ?? new FileObject();
+        return response.EnsureSuccess().Data ?? new FileObject();
     }
 
     /// <inheritdoc />
@@ -134,7 +134,7 @@ public sealed class FileClient : IFileClient
             throw new ArgumentException("A file digest is required.", nameof(id));
 
         var response = await _client.PostAsync<AnalysisObject>($"/files/{id}/analyse", new { }, cancellationToken).ConfigureAwait(false);
-        return response.Data ?? new AnalysisObject();
+        return response.EnsureSuccess().Data ?? new AnalysisObject();
     }
 
     /// <inheritdoc />
@@ -153,6 +153,6 @@ public sealed class FileClient : IFileClient
             throw new ArgumentException("A file digest is required.", nameof(id));
 
         var response = await _client.GetAsync<string>($"/files/{id}/download_url", cancellationToken).ConfigureAwait(false);
-        return response.Data ?? throw new InvalidOperationException("The API returned no download URL.");
+        return response.EnsureSuccess().Data ?? throw new InvalidOperationException("The API returned no download URL.");
     }
 }

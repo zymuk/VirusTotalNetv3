@@ -45,6 +45,6 @@ public sealed class SearchClient : ISearchClient
             path += $"&cursor={Uri.EscapeDataString(cursor)}";
 
         var response = await _client.GetAsync<List<VtSearchObject>>(path, cancellationToken).ConfigureAwait(false);
-        return VtCollection<VtSearchObject>.FromEnvelope(response);
+        return VtCollection<VtSearchObject>.FromEnvelope(response.EnsureSuccess());
     }
 }

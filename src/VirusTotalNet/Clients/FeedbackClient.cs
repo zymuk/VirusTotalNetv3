@@ -66,7 +66,7 @@ public sealed class FeedbackClient : IFeedbackClient
     {
         var path = ValidatePath(objectType, id);
         var response = await _client.GetAsync<List<CommentObject>>(Paginate(path + "/comments", cursor), cancellationToken).ConfigureAwait(false);
-        return VtCollection<CommentObject>.FromEnvelope(response);
+        return VtCollection<CommentObject>.FromEnvelope(response.EnsureSuccess());
     }
 
     /// <inheritdoc />
@@ -78,7 +78,7 @@ public sealed class FeedbackClient : IFeedbackClient
 
         var body = new { data = new { type = VtObjectType.Comment, attributes = new { text } } };
         var response = await _client.PostAsync<CommentObject>(path + "/comments", body, cancellationToken).ConfigureAwait(false);
-        return response.Data ?? new CommentObject();
+        return response.EnsureSuccess().Data ?? new CommentObject();
     }
 
     /// <inheritdoc />
@@ -86,7 +86,7 @@ public sealed class FeedbackClient : IFeedbackClient
     {
         var path = ValidatePath(objectType, id);
         var response = await _client.GetAsync<List<VoteObject>>(Paginate(path + "/votes", cursor), cancellationToken).ConfigureAwait(false);
-        return VtCollection<VoteObject>.FromEnvelope(response);
+        return VtCollection<VoteObject>.FromEnvelope(response.EnsureSuccess());
     }
 
     /// <inheritdoc />
@@ -98,7 +98,7 @@ public sealed class FeedbackClient : IFeedbackClient
 
         var body = new { data = new { type = VtObjectType.Vote, attributes = new { verdict } } };
         var response = await _client.PostAsync<VoteObject>(path + "/votes", body, cancellationToken).ConfigureAwait(false);
-        return response.Data ?? new VoteObject();
+        return response.EnsureSuccess().Data ?? new VoteObject();
     }
 
     private static string ValidatePath(string objectType, string id)

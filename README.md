@@ -15,6 +15,7 @@
 * Comments & votes on any object type (list + create)
 * Relationships — typed accessors + generic fallback, descriptor-first ids, memoized `IAsyncEnumerable` traversal
 * Search — `/intelligence/search` via `ISearchClient`/`SearchClient` (cursor pagination, `descriptors_only` mode)
+* Error handling — `ThrowOnError=false` returns the error envelope; Result-style `VtResult<T>` through `IVtClient.Try*`, so checks never need a try/catch
 * `VirusTotal` facade — v2-style one-liners: `GetFileReportAsync(hash)` / `GetFileReportAsync(bytes)`, auto-scans and waits when the file is unknown
 
 ### Examples

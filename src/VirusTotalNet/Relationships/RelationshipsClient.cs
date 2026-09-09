@@ -162,6 +162,7 @@ public sealed class RelationshipsClient : IRelationshipsClient
             path += $"?cursor={Uri.EscapeDataString(cursor)}";
 
         var response = await _client.GetAsync<List<JsonElement>>(path, cancellationToken).ConfigureAwait(false);
+        response.EnsureSuccess();
 
         var page = new CachedPage
         {

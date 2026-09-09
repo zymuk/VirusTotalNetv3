@@ -53,7 +53,7 @@ public sealed class IpClient : IIpClient
     {
         var id = ValidateIp(ip);
         var response = await _client.GetAsync<IpObject>($"/ip_addresses/{id}", cancellationToken).ConfigureAwait(false);
-        return response.Data ?? new IpObject();
+        return response.EnsureSuccess().Data ?? new IpObject();
     }
 
     /// <inheritdoc />
@@ -61,7 +61,7 @@ public sealed class IpClient : IIpClient
     {
         var id = ValidateIp(ip);
         var response = await _client.PostAsync<AnalysisObject>($"/ip_addresses/{id}/analyse", new { }, cancellationToken).ConfigureAwait(false);
-        return response.Data ?? new AnalysisObject();
+        return response.EnsureSuccess().Data ?? new AnalysisObject();
     }
 
     /// <inheritdoc />
@@ -69,7 +69,7 @@ public sealed class IpClient : IIpClient
     {
         var id = ValidateIp(ip);
         var response = await _client.GetAsync<List<ResolutionObject>>(Paginate($"/ip_addresses/{id}/resolutions", cursor), cancellationToken).ConfigureAwait(false);
-        return VtCollection<ResolutionObject>.FromEnvelope(response);
+        return VtCollection<ResolutionObject>.FromEnvelope(response.EnsureSuccess());
     }
 
     private static string ValidateIp(string ip)

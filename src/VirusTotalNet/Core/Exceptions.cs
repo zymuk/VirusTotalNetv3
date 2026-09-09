@@ -64,6 +64,13 @@ public class ServerException : VtHttpException
         : base(HttpStatusCode.InternalServerError, message, errorCode) { }
 }
 
+/// <summary>Exception thrown when a <c>VtResult</c> carrying failure is unwrapped via <c>ValueOrThrow</c>.</summary>
+public class VtResultException : VirusTotalException
+{
+    public VtResultException(string message, string? errorCode = null)
+        : base(message, errorCode) { }
+}
+
 /// <summary>Exception thrown when the rate limit is exceeded (HTTP 429 with retry-after).</summary>
 public class RateLimitException : VtHttpException
 {

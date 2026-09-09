@@ -61,7 +61,7 @@ public sealed class DomainClient : IDomainClient
     {
         var id = ValidateDomain(domain);
         var response = await _client.GetAsync<DomainObject>($"/domains/{id}", cancellationToken).ConfigureAwait(false);
-        return response.Data ?? new DomainObject();
+        return response.EnsureSuccess().Data ?? new DomainObject();
     }
 
     /// <inheritdoc />
@@ -69,7 +69,7 @@ public sealed class DomainClient : IDomainClient
     {
         var id = ValidateDomain(domain);
         var response = await _client.PostAsync<AnalysisObject>($"/domains/{id}/analyse", new { }, cancellationToken).ConfigureAwait(false);
-        return response.Data ?? new AnalysisObject();
+        return response.EnsureSuccess().Data ?? new AnalysisObject();
     }
 
     /// <inheritdoc />
@@ -77,7 +77,7 @@ public sealed class DomainClient : IDomainClient
     {
         var id = ValidateDomain(domain);
         var response = await _client.GetAsync<List<ResolutionObject>>(Paginate($"/domains/{id}/resolutions", cursor), cancellationToken).ConfigureAwait(false);
-        return VtCollection<ResolutionObject>.FromEnvelope(response);
+        return VtCollection<ResolutionObject>.FromEnvelope(response.EnsureSuccess());
     }
 
     /// <inheritdoc />
@@ -85,7 +85,7 @@ public sealed class DomainClient : IDomainClient
     {
         var id = ValidateDomain(domain);
         var response = await _client.GetAsync<List<DomainObject>>(Paginate($"/domains/{id}/subdomains", cursor), cancellationToken).ConfigureAwait(false);
-        return VtCollection<DomainObject>.FromEnvelope(response);
+        return VtCollection<DomainObject>.FromEnvelope(response.EnsureSuccess());
     }
 
     private static string ValidateDomain(string domain)

@@ -1,3 +1,4 @@
+using System.Net;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -14,6 +15,14 @@ public sealed class VtError
 
     /// <summary>Optional, more detailed explanation of the error.</summary>
     public string? Detail { get; set; }
+
+    /// <summary>
+    /// HTTP status of the failed response. Not part of the API payload — the client stamps it when
+    /// it produces the envelope, and <see cref="VirusTotalNet.v3.Core.VtClient"/> uses it for
+    /// exception mapping.
+    /// </summary>
+    [JsonIgnore]
+    public HttpStatusCode? StatusCode { get; set; }
 
     /// <summary>Any error fields not mapped by properties above, preserved losslessly.</summary>
     [JsonExtensionData]

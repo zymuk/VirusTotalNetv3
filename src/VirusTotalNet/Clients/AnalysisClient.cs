@@ -54,7 +54,7 @@ public sealed class AnalysisClient : IAnalysisClient
             throw new ArgumentException("An analysis id is required.", nameof(id));
 
         var response = await _client.GetAsync<AnalysisObject>($"/analyses/{id}", cancellationToken).ConfigureAwait(false);
-        return response.Data ?? new AnalysisObject();
+        return response.EnsureSuccess().Data ?? new AnalysisObject();
     }
 
     /// <inheritdoc />
