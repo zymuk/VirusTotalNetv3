@@ -23,6 +23,10 @@
     <IsAotCompatible>true</IsAotCompatible>
   </PropertyGroup>
 
+  <ItemGroup>
+    <InternalsVisibleTo Include="VirusTotalNet.Tests" />
+  </ItemGroup>
+
   <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
     <PackageReference Include="System.Text.Json" Version="8.0.5" />
     <PackageReference Include="System.Net.Http" Version="4.3.4" />

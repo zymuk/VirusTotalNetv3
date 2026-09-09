@@ -18,12 +18,26 @@
 * `IFileClient`/`FileClient` — `ScanFileAsync` uploads a file as multipart/form-data (`POST /files`, ≤ 32 MB enforced) and returns an `AnalysisObject` with typed `AnalysisAttributes` (status, date, stats); `ScanLargeFileAsync` handles files over 32 MB via the pre-signed upload URL; `GetFileAsync` retrieves the report for any MD5/SHA-1/SHA-256 (`GET /files/{id}`); `AnalyseFileAsync` rescans a known file (`POST /files/{id}/analyse`); `DownloadAsync`/`GetDownloadUrlAsync` fetch a file's content or a pre-signed URL
 * `VtClient.GetStreamAsync` — streaming GET for binary payloads, sharing the same rate limiter and retry policy
 * `IAnalysisClient`/`AnalysisClient` — `GetAnalysisAsync` and `WaitForCompletionAsync` (respects the shared rate limiter, configurable poll interval, `AnalysisStatus` constants)
+* `VirusTotal` facade — v2-style one-liners: construct with an API key, call `GetFileReportAsync(hash)` or `GetFileReportAsync(byte[])` (computes SHA-256, and auto-scans/waits when the file is not yet known)
 
 ### Examples
 
-*- Work in progress - no runnable API examples yet (Milestone M0 scaffold only).*
+*- Work in progress - first runnable API example (EICAR) shipped.*
 
-* `VirusTotalNet.Examples` — console project scaffolding only (builds and runs the .NET template)
-* First real example (M2): the classic EICAR "seen before" check, mirroring the v2 library
+The classic EICAR "seen before?" check, one line like the v2 library. Set `VT_API_KEY` and run the console project:
+
+```csharp
+using System.Text;
+using VirusTotalNet.v3;
+
+var vt = new VirusTotal("YOUR_API_KEY");
+
+byte[] eicar = Encoding.ASCII.GetBytes(@"X5O!P%@AP[4\PZX54(P^)7CC)7}$EICAR-STANDARD-ANTIVIRUS-TEST-FILE!$H+H*");
+
+FileObject file = await vt.GetFileReportAsync(eicar);
+Console.WriteLine("Malicious: " + file.Attributes.LastAnalysisStats.Malicious);
+```
+
+`GetFileReportAsync` looks the file up by its computed SHA-256; if VirusTotal does not know it yet, the facade submits a scan, waits for completion, and returns the fresh report.
 
 Features and examples in this README only appear once they are implemented and tested.
