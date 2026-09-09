@@ -30,21 +30,5 @@ public sealed class VtCollection<T> where T : class
     }
 
     private static string? CursorFromLink(string? link)
-    {
-        if (string.IsNullOrEmpty(link) || !Uri.TryCreate(link, UriKind.Absolute, out var uri))
-            return null;
-
-        var query = uri.Query.TrimStart('?');
-        foreach (var pair in query.Split(new[] { '&' }, StringSplitOptions.RemoveEmptyEntries))
-        {
-            var eq = pair.IndexOf('=');
-            if (eq <= 0) continue;
-            var key = pair.Substring(0, eq);
-            var value = pair.Substring(eq + 1);
-            if (key == "cursor")
-                return Uri.UnescapeDataString(value.Replace('+', ' '));
-        }
-
-        return null;
-    }
+        => VirusTotalNet.v3.Internal.VtCursor.Next(link);
 }

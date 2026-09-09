@@ -23,6 +23,7 @@
 * `IDomainClient`/`DomainClient` — `GetDomainAsync`, `AnalyseDomainAsync` (rescan), `GetResolutionsAsync` / `GetSubdomainsAsync` (cursor-paginated `VtCollection`)
 * `IIpClient`/`IpClient` — `GetIpAsync`, `AnalyseIpAsync` (rescan), `GetResolutionsAsync` (cursor-paginated)
 * `IFeedbackClient`/`FeedbackClient` — comments & votes on any object type: `GetCommentsAsync`, `AddCommentAsync`, `GetVotesAsync`, `AddVoteAsync` (cursor-paginated lists; `VtObjectType` constants for files/urls/domains/ip_addresses)
+* `IRelationshipsClient`/`RelationshipsClient` — relationship navigation: generic `GetRelatedAsync<T>`, descriptor-first `GetRelatedIdsAsync` (ids only), memoized first pages per `(type, id, name)`, and `TraverseAsync<T>` `IAsyncEnumerable` traversal; typed extensions (`ContactedUrlsAsync`, `DetectedUrlsAsync`, `BehavioursAsync`, `ResolutionsAsync`, `SubdomainsAsync`, `CommentsAsync`, `VotesAsync`) hanging off the parent object
 
 ### Examples
 

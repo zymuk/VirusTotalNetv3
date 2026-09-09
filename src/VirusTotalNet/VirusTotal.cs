@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using VirusTotalNet.v3.Clients;
 using VirusTotalNet.v3.Core;
 using VirusTotalNet.v3.Models;
+using VirusTotalNet.v3.Relationships;
 
 namespace VirusTotalNet.v3;
 
@@ -30,6 +31,9 @@ public sealed class VirusTotal : IDisposable
     /// <summary>Analysis operations: retrieve and wait for completion.</summary>
     public IAnalysisClient AnalysisClient { get; }
 
+    /// <summary>Relationship navigation: typed accessors, generic fallback, descriptor-first ids and traversal.</summary>
+    public IRelationshipsClient Relationships { get; }
+
     /// <summary>Creates the facade with the given API key.</summary>
     /// <param name="apiKey">VirusTotal API key, sent as the <c>x-apikey</c> header.</param>
     public VirusTotal(string apiKey)
@@ -44,6 +48,7 @@ public sealed class VirusTotal : IDisposable
         _ownsClient = true;
         FileClient = new FileClient(_client);
         AnalysisClient = new AnalysisClient(_client);
+        Relationships = new RelationshipsClient(_client);
     }
 
     // Test seam: lets tests supply a VtClient wired to a stubbed HTTP handler.
@@ -53,6 +58,7 @@ public sealed class VirusTotal : IDisposable
         _ownsClient = false;
         FileClient = new FileClient(_client);
         AnalysisClient = new AnalysisClient(_client);
+        Relationships = new RelationshipsClient(_client);
     }
 
     /// <summary>
