@@ -53,8 +53,21 @@ public interface IVtClient
     /// </summary>
     Task<VtResult<T>> TryPostAsync<T>(string uri, object body, CancellationToken cancellationToken = default);
 
-    /// <summary>
-    /// Result-style POST with raw <see cref="HttpContent"/>; see <see cref="TryGetAsync{T}"/> for semantics.
-    /// </summary>
-    Task<VtResult<T>> TryPostAsync<T>(string uri, HttpContent content, CancellationToken cancellationToken = default);
+/// <summary>
+        /// Result-style POST with raw <see cref="HttpContent"/>; see <see cref="TryGetAsync{T}"/> for semantics.
+        /// </summary>
+        Task<VtResult<T>> TryPostAsync<T>(string uri, HttpContent content, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Performs a DELETE request and deserialises the response envelope.
+        /// </summary>
+        Task<VtResponse<T>> DeleteAsync<T>(string uri, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Result-style DELETE that never throws for API errors: returns a <see cref="VtResult{T}"/>
+        /// carrying either the payload or the error. Transport/retry/rate-limit semantics match
+        /// <see cref="DeleteAsync{T}(string, CancellationToken)"/>; <see cref="VirusTotalOptions.ThrowOnError"/>
+        /// is ignored.
+        /// </summary>
+        Task<VtResult<T>> TryDeleteAsync<T>(string uri, CancellationToken cancellationToken = default);
 }

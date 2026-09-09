@@ -146,11 +146,26 @@ public sealed class VtClient : IVtClient, IDisposable
             cancellationToken).ConfigureAwait(false);
     }
 
-    /// <inheritdoc />
-    public Task<VtResult<T>> TryGetAsync<T>(string uri, CancellationToken cancellationToken = default)
-        => SendWithResultAsync<T>(
-            () => new HttpRequestMessage(HttpMethod.Get, BuildRelativeUri(uri)),
-            cancellationToken);
+/// <inheritdoc />
+        public async Task<VtResponse<T>> DeleteAsync<T>(string uri, CancellationToken cancellationToken = default)
+        {
+            return await SendWithRetryAsync(
+                () => new HttpRequestMessage(HttpMethod.Delete, BuildRelativeUri(uri)),
+                DeserializeResponse<T>,
+                cancellationToken).ConfigureAwait(false);
+        }
+
+        /// <inheritdoc />
+        public Task<VtResult<T>> TryDeleteAsync<T>(string uri, CancellationToken cancellationToken = default)
+            => SendWithResultAsync<T>(
+                () => new HttpRequestMessage(HttpMethod.Delete, BuildRelativeUri(uri)),
+                cancellationToken);
+
+        /// <inheritdoc />
+        public Task<VtResult<T>> TryGetAsync<T>(string uri, CancellationToken cancellationToken = default)
+            => SendWithResultAsync<T>(
+                () => new HttpRequestMessage(HttpMethod.Get, BuildRelativeUri(uri)),
+                cancellationToken);
 
     /// <inheritdoc />
     public Task<VtResult<T>> TryPostAsync<T>(string uri, object body, CancellationToken cancellationToken = default)

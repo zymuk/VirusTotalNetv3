@@ -74,6 +74,8 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IFeedbackClient, FeedbackClient>();
         services.AddSingleton<ISearchClient, SearchClient>();
         services.AddSingleton<IRelationshipsClient, RelationshipsClient>();
+        services.AddSingleton<ISavedSearchClient, SavedSearchClient>();
+        services.AddSingleton<IThreatActorClient, ThreatActorClient>();
 
         services.AddSingleton(sp => new VirusTotal(sp.GetRequiredService<IVtClient>()));
 
