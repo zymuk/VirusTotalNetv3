@@ -239,4 +239,74 @@ Assert.Contains("name=file", handler.LastRequestBody);
 
         Assert.Empty(handler.Requests);
     }
+
+    [Fact]
+    public async Task Download_SendsGet_AndReturnsStream()
+    {
+        var bytes = Encoding.UTF8.GetBytes("file-bytes");
+        var handler = new StubHttpMessageHandler(
+            new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new ByteArrayContent(bytes)
+            });
+
+        using var vt = new VtClient(Options(), new HttpClient(handler));
+        var client = new FileClient(vt);
+
+        using var stream = await client.DownloadAsync("hash123");
+        using var reader = new StreamReader(stream);
+        Assert.Equal("file-bytes", await reader.ReadToEndAsync());
+
+        var request = Assert.Single(handler.Requests);
+        Assert.Equal(HttpMethod.Get, request.Method);
+        Assert.Equal(VirusTotalOptions.DefaultBaseAddress + "files/hash123/download", request.RequestUri!.ToString());
+    }
+
+    [Fact]
+    public async Task Download_NotFound_Throws()
+    {
+        var handler = new StubHttpMessageHandler(
+            StubHttpMessageHandler.Json(HttpStatusCode.NotFound,
+                """{ "error": { "code": "NotFoundError", "message": "Not found" } }"""));
+
+        using var vt = new VtClient(Options(), new HttpClient(handler));
+        var client = new FileClient(vt);
+
+        await Assert.ThrowsAsync<NotFoundException>(
+            () => client.DownloadAsync("unknown"));
+    }
+
+    [Fact]
+    public async Task GetDownloadUrl_ReturnsSignedUrl()
+    {
+        var handler = new StubHttpMessageHandler(
+            StubHttpMessageHandler.Json(HttpStatusCode.OK,
+                """{ "data": "https://files.example.com/dl/signed?token=abc" }"""));
+
+        using var vt = new VtClient(Options(), new HttpClient(handler));
+        var client = new FileClient(vt);
+
+        var url = await client.GetDownloadUrlAsync("hash123");
+
+        Assert.Equal("https://files.example.com/dl/signed?token=abc", url);
+
+        var request = Assert.Single(handler.Requests);
+        Assert.Equal(HttpMethod.Get, request.Method);
+        Assert.Equal(VirusTotalOptions.DefaultBaseAddress + "files/hash123/download_url", request.RequestUri!.ToString());
+    }
+
+    [Fact]
+    public async Task DownloadMethods_EmptyId_Throw()
+    {
+        var handler = new StubHttpMessageHandler(
+            StubHttpMessageHandler.Json(HttpStatusCode.OK, """{ "data": null }"""));
+
+        using var vt = new VtClient(Options(), new HttpClient(handler));
+        var client = new FileClient(vt);
+
+        await Assert.ThrowsAsync<ArgumentException>(() => client.DownloadAsync(" "));
+        await Assert.ThrowsAsync<ArgumentException>(() => client.GetDownloadUrlAsync(""));
+
+        Assert.Empty(handler.Requests);
+    }
 }

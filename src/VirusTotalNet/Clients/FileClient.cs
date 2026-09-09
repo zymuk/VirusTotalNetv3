@@ -37,6 +37,22 @@ public interface IFileClient
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>The newly created analysis object.</returns>
     Task<AnalysisObject> AnalyseFileAsync(string id, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Downloads the content of a known file (<c>GET /files/{id}/download</c>; redirects are followed).
+    /// </summary>
+    /// <param name="id">MD5, SHA-1 or SHA-256 digest of the file to download.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>A stream with the raw file bytes; the caller must dispose it.</returns>
+    Task<System.IO.Stream> DownloadAsync(string id, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Retrieves a pre-signed URL that can be used to download the file (<c>GET /files/{id}/download_url</c>).
+    /// </summary>
+    /// <param name="id">MD5, SHA-1 or SHA-256 digest of the file.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The pre-signed download URL.</returns>
+    Task<string> GetDownloadUrlAsync(string id, CancellationToken cancellationToken = default);
 }
 
 /// <summary>
@@ -88,5 +104,24 @@ public sealed class FileClient : IFileClient
 
         var response = await _client.PostAsync<AnalysisObject>($"/files/{id}/analyse", new { }, cancellationToken).ConfigureAwait(false);
         return response.Data ?? new AnalysisObject();
+    }
+
+    /// <inheritdoc />
+    public async Task<System.IO.Stream> DownloadAsync(string id, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(id))
+            throw new ArgumentException("A file digest is required.", nameof(id));
+
+        return await _client.GetStreamAsync($"/files/{id}/download", cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <inheritdoc />
+    public async Task<string> GetDownloadUrlAsync(string id, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(id))
+            throw new ArgumentException("A file digest is required.", nameof(id));
+
+        var response = await _client.GetAsync<string>($"/files/{id}/download_url", cancellationToken).ConfigureAwait(false);
+        return response.Data ?? throw new InvalidOperationException("The API returned no download URL.");
     }
 }

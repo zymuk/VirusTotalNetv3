@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
@@ -21,6 +22,12 @@ public interface IVtClient
     /// Performs a GET request and deserialises the response envelope.
     /// </summary>
     Task<VtResponse<T>> GetAsync<T>(string uri, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Performs a GET request and returns the raw response body as a stream (for binary payloads such as file downloads).
+    /// The returned stream must be disposed by the caller.
+    /// </summary>
+    Task<Stream> GetStreamAsync(string uri, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Performs a POST request with a JSON body and deserialises the response envelope.

@@ -58,6 +58,63 @@ public sealed class VtClient : IVtClient, IDisposable
     }
 #endif
 
+    public async Task<System.IO.Stream> GetStreamAsync(string uri, CancellationToken cancellationToken = default)
+    {
+        var attempt = 0;
+        while (true)
+        {
+            await _rateLimiter.WaitUntilAllowedAsync(cancellationToken).ConfigureAwait(false);
+
+            using var request = new HttpRequestMessage(HttpMethod.Get, BuildRelativeUri(uri));
+
+            HttpResponseMessage? response = null;
+            try
+            {
+                response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
+            }
+            catch (Exception ex) when (IsRetryableNetworkError(ex) && ShouldRetry(attempt))
+            {
+                response?.Dispose();
+                await BackoffDelayAsync(attempt, retryAfter: null, cancellationToken).ConfigureAwait(false);
+                attempt++;
+                continue;
+            }
+
+            if (response.IsSuccessStatusCode)
+                return await response.Content.ReadAsStreamAsync().ConfigureAwait(false);
+
+            if (IsRetryableStatus(response) && ShouldRetry(attempt))
+            {
+                var retryAfter = GetRetryAfter(response);
+                response.Dispose();
+                await BackoffDelayAsync(attempt, retryAfter, cancellationToken).ConfigureAwait(false);
+                attempt++;
+                continue;
+            }
+
+            var error = await MapErrorResponseAsync(response).ConfigureAwait(false);
+            response.Dispose();
+            throw error;
+        }
+    }
+
+    private static async Task<VirusTotalException> MapErrorResponseAsync(HttpResponseMessage response)
+    {
+        try
+        {
+            var stream = await ReadContentStream(response).ConfigureAwait(false);
+            var envelope = await DeserializeAsync<JsonElement>(stream, default).ConfigureAwait(false);
+
+            if (envelope?.Error is { } error)
+                return MapErrorToException(error, response.StatusCode);
+        }
+        catch
+        {
+        }
+
+        return new VtHttpException(response.StatusCode, $"HTTP {(int)response.StatusCode} {response.ReasonPhrase}");
+    }
+
     public async Task<VtResponse<T>> PostAsync<T>(string uri, object body, CancellationToken cancellationToken = default)
     {
         return await SendWithRetryAsync(
