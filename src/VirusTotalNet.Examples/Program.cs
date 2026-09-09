@@ -1,5 +1,8 @@
 ﻿using System.Text;
 using VirusTotalNet.v3;
+using VirusTotalNet.v3.Clients;
+using VirusTotalNet.v3.Models;
+using VirusTotalNet.v3.Relationships;
 
 var apiKey = Environment.GetEnvironmentVariable("VT_API_KEY");
 if (string.IsNullOrWhiteSpace(apiKey))
@@ -44,3 +47,45 @@ string sha256 = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData
 var report = await vt.FileClient.GetFileAsync(sha256);
 Console.WriteLine($"SHA-256   : {report.Id}");
 Console.WriteLine($"Malicious : {report.Attributes?.LastAnalysisStats?.Malicious}");
+
+Console.WriteLine();
+Console.WriteLine("=== M3: URLs / Domains / IPs clients ===");
+
+var domains = new DomainClient(vt.Client);
+var domain = await domains.GetDomainAsync("example.com");
+Console.WriteLine($"Domain: {domain.Id} (registrar: {domain.Attributes?.Registrar}, malicious: {domain.Attributes?.LastAnalysisStats?.Malicious})");
+
+var subs = await domains.GetSubdomainsAsync("example.com");
+Console.WriteLine($"Subdomains: {subs.Count} on this page — first few:");
+foreach (var sub in subs.Items.Take(5))
+    Console.WriteLine("  " + sub.Id);
+
+var resolutions = await domains.GetResolutionsAsync("example.com");
+Console.WriteLine($"Resolutions: {resolutions.Count} on this page — first few:");
+foreach (var res in resolutions.Items.Take(5))
+    Console.WriteLine("  -> " + res.Attributes?.IpAddress);
+
+Console.WriteLine();
+Console.WriteLine("=== M4: relationships from an object in hand ===");
+
+Console.WriteLine($"Walking relationships of {file.Id} (the EICAR sample):");
+
+// Descriptor-first: (type, id) only, light on quota.
+var commentIds = await vt.Relationships.GetRelatedIdsAsync("files", file.Id, "comments");
+Console.WriteLine($"comments: {commentIds.Count} ids on this page");
+
+// Typed accessor (first page is memoized per session).
+var contacted = await file.ContactedUrlsAsync(vt.Relationships);
+Console.WriteLine($"contacted_urls: {contacted.Count} on this page — first few:");
+foreach (var url in contacted.Items.Take(5))
+    Console.WriteLine("  " + url.Id);
+
+// Generic fallback + paged traversal (bounded to keep the demo quota-friendly).
+var total = 0;
+await foreach (var url in vt.Relationships.TraverseAsync<UrlObject>("files", file.Id, "contacted_urls"))
+{
+    total++;
+    if (total >= 5)
+        break;
+}
+Console.WriteLine($"traversed contacted_urls: {total} items (bounded)");

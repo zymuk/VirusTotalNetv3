@@ -63,4 +63,31 @@ Console.WriteLine("Malicious: " + report.Attributes.LastAnalysisStats.Malicious)
 
 `ScanFileAsync` returns the created analysis; `WaitForCompletionAsync` polls until the status is terminal; `GetFileAsync` then returns the fresh report including the per-engine statistics.
 
+Walk the links between objects: look a file up, then query it directly by type (M3 clients) or traverse its relationships from the object at hand (M4):
+
+```csharp
+using VirusTotalNet.v3;
+using VirusTotalNet.v3.Clients;
+using VirusTotalNet.v3.Relationships;
+
+var vt = new VirusTotal("YOUR_API_KEY");
+FileObject file = await vt.FileClient.GetFileAsync("sha256_of_the_file");
+
+// M3 — query a domain directly by type.
+var domains = new DomainClient(vt.Client);
+DomainObject domain = await domains.GetDomainAsync("example.com");
+VtCollection<DomainObject> subs = await domains.GetSubdomainsAsync("example.com");
+VtCollection<ResolutionObject> resolutions = await domains.GetResolutionsAsync("example.com");
+
+// M4 — walk relationships from the file object without knowing API paths.
+VtCollection<VtObjectId> commentIds = await vt.Relationships.GetRelatedIdsAsync("files", file.Id, "comments"); // ids only
+VtCollection<UrlObject> contacted = await file.ContactedUrlsAsync(vt.Relationships);                          // typed + memoized
+await foreach (UrlObject url in vt.Relationships.TraverseAsync<UrlObject>("files", file.Id, "contacted_urls")) // all pages
+{
+    Console.WriteLine(url.Id);
+}
+```
+
+M3 clients (`UrlClient`, `DomainClient`, `IpClient`, `FeedbackClient`) target a specific object type you already know. M4 navigation works off an object in hand — no need to remember endpoint paths — and shares one rate limiter plus memoized first pages so traversals stay budget-friendly.
+
 Features and examples in this README only appear once they are implemented and tested.
