@@ -34,6 +34,21 @@ public sealed class VirusTotal : IDisposable
     /// <summary>Relationship navigation: typed accessors, generic fallback, descriptor-first ids and traversal.</summary>
     public IRelationshipsClient Relationships { get; }
 
+    /// <summary>Intelligence feeds: minutely bzip2-compressed batches of files, URLs, domains, IPs and behaviours.</summary>
+    public IFeedsClient Feeds { get; }
+
+    /// <summary>Private scanning (<c>/private/files</c>) for samples that must not be shared with the community.</summary>
+    public IPrivateScanningClient PrivateScanning { get; }
+
+    /// <summary>Livehunt: manage YARA hunting rulesets and view notifications.</summary>
+    public IHuntingClient Hunting { get; }
+
+    /// <summary>Retrohunt: run YARA rules against historical samples.</summary>
+    public IRetrohuntClient Retrohunt { get; }
+
+    /// <summary>Users and groups management.</summary>
+    public IUsersClient Users { get; }
+
     /// <summary>Creates the facade with the given API key.</summary>
     /// <param name="apiKey">VirusTotal API key, sent as the <c>x-apikey</c> header.</param>
     public VirusTotal(string apiKey)
@@ -49,6 +64,11 @@ public sealed class VirusTotal : IDisposable
         FileClient = new FileClient(_client);
         AnalysisClient = new AnalysisClient(_client);
         Relationships = new RelationshipsClient(_client);
+        Feeds = new FeedsClient(_client);
+        PrivateScanning = new PrivateScanningClient(_client);
+        Hunting = new HuntingClient(_client);
+        Retrohunt = new RetrohuntClient(_client);
+        Users = new UsersClient(_client);
     }
 
     /// <summary>Creates the facade sharing an existing client without owning its lifecycle.</summary>
@@ -60,6 +80,11 @@ public sealed class VirusTotal : IDisposable
         FileClient = new FileClient(_client);
         AnalysisClient = new AnalysisClient(_client);
         Relationships = new RelationshipsClient(_client);
+        Feeds = new FeedsClient(_client);
+        PrivateScanning = new PrivateScanningClient(_client);
+        Hunting = new HuntingClient(_client);
+        Retrohunt = new RetrohuntClient(_client);
+        Users = new UsersClient(_client);
     }
 
     /// <summary>

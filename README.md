@@ -14,6 +14,11 @@
 * Relationships — typed accessors + generic fallback, descriptor-first ids, memoized `IAsyncEnumerable` traversal
 * Behaviours — per-file sandbox behaviour reports (`IBehaviourClient`/`BehaviourClient`): retrieve a `file_behaviour`, download EVTX/PCAP/memdump/HTML artifacts
 * Search — `/intelligence/search` via `ISearchClient`/`SearchClient` (cursor pagination, `descriptors_only` mode)
+* Feeds (premium) — `IFeedsClient`/`FeedsClient` streams bzip2-compressed NDJSON batches of files, URLs, domains, IPs and file behaviours (`/feeds/.../{time}`, per-minute + hourly tar.bz2); raw `Stream` returned so you can decompress any way you like
+* Private scanning (premium) — `IPrivateScanningClient`/`PrivateScanningClient`: upload samples under `/private/files` (multipart with sandbox/network/TLS options), upload URL, list/get/delete, analyse, retrieve private analyses and behaviour reports without sharing samples publicly
+* Livehunt hunting rulesets — `IHuntingClient`/`HuntingClient`: create/list/get/update/delete YARA rulesets under `/intelligence/hunting_rulesets`, plus list/get hunting notifications (filter/order/limit, cursor-paged)
+* Retrohunt — `IRetrohuntClient`/`RetrohuntClient`: create/list/get/abort `/intelligence/retrohunt_jobs` (rules, notification email, corpus, time range) and list the matching files
+* Users & groups — `IUsersClient`/`UsersClient`: get/update/delete users and groups, manage group membership (list / add / remove)
 * Error handling — `ThrowOnError=false` returns the error envelope; Result-style `VtResult<T>` through `IVtClient.Try*`, so checks never need a try/catch
 * `VirusTotal` facade — v2-style one-liners: `GetFileReportAsync(hash)` / `GetFileReportAsync(bytes)`, auto-scans and waits when the file is unknown
 * DI — optional `VirusTotalNet.v3.DependencyInjection` package: `AddVirusTotal` (options delegate or `IConfiguration` section) registers the client, all module clients and the facade behind one shared `IVtClient`

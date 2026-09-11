@@ -79,6 +79,11 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IThreatActorClient, ThreatActorClient>();
         services.AddSingleton<ICollectionClient, CollectionClient>();
         services.AddSingleton<IGraphClient, GraphClient>();
+        services.AddSingleton<IFeedsClient, FeedsClient>();
+        services.AddSingleton<IPrivateScanningClient, PrivateScanningClient>();
+        services.AddSingleton<IHuntingClient, HuntingClient>();
+        services.AddSingleton<IRetrohuntClient, RetrohuntClient>();
+        services.AddSingleton<IUsersClient, UsersClient>();
 
         services.AddSingleton(sp => new VirusTotal(sp.GetRequiredService<IVtClient>()));
 
