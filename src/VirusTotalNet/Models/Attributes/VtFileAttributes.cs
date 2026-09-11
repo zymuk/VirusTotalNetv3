@@ -36,6 +36,12 @@ public sealed class VtFileAttributes
     /// <summary>Aggregated detection statistics across all engines.</summary>
     public LastAnalysisStats? LastAnalysisStats { get; set; }
 
+    /// <summary>
+    /// Per-engine results of the last analysis, keyed by engine name
+    /// (<c>attributes.last_analysis_results</c>).
+    /// </summary>
+    public Dictionary<string, LastAnalysisResult>? LastAnalysisResults { get; set; }
+
     /// <summary>Any attribute fields not mapped by properties above, preserved losslessly.</summary>
     [JsonExtensionData]
     public Dictionary<string, JsonElement> Raw { get; set; } = new();
@@ -62,4 +68,29 @@ public sealed class LastAnalysisStats
 
     /// <summary>Number of engines that timed out.</summary>
     public int? Timeout { get; set; }
+}
+
+/// <summary>
+/// Detection result of a single antivirus engine from the last analysis
+/// (<c>attributes.last_analysis_results</c> value).
+/// </summary>
+public sealed class LastAnalysisResult
+{
+    /// <summary>Verdict category: <c>malicious</c>, <c>suspicious</c>, <c>harmless</c>, <c>undetected</c>, ...</summary>
+    public string? Category { get; set; }
+
+    /// <summary>Human-readable engine name (e.g. <c>Avast</c>).</summary>
+    public string? EngineName { get; set; }
+
+    /// <summary>Engine binary version (e.g. <c>23.9.8494.0</c>).</summary>
+    public string? EngineVersion { get; set; }
+
+    /// <summary>When the engine signature database was last updated (raw date/time as returned).</summary>
+    public string? EngineUpdate { get; set; }
+
+    /// <summary>Detection mode: <c>blacklist</c>, <c>heuristic</c>, ...</summary>
+    public string? Method { get; set; }
+
+    /// <summary>Threat/signature name when the engine flagged the sample, <c>null</c> otherwise.</summary>
+    public string? Result { get; set; }
 }

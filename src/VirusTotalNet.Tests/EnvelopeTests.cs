@@ -28,6 +28,19 @@ public class EnvelopeTests
         Assert.Equal(new DateTime(2024, 1, 1), data.Attributes!.FirstSubmissionDate);
         Assert.Equal(DateTimeOffset.FromUnixTimeSeconds(1704067200), data.Attributes!.LastModificationDate);
 
+        Assert.Equal(2, data.Attributes!.LastAnalysisStats!.Malicious);
+        Assert.Equal(45, data.Attributes!.LastAnalysisStats!.Harmless);
+
+        Assert.NotNull(data.Attributes!.LastAnalysisResults);
+        Assert.Equal(2, data.Attributes!.LastAnalysisResults!.Count);
+        Assert.Equal("malicious", data.Attributes!.LastAnalysisResults!["Avast"].Category);
+        Assert.Equal("Avast", data.Attributes!.LastAnalysisResults!["Avast"].EngineName);
+        Assert.Equal("23.9.8494.0", data.Attributes!.LastAnalysisResults!["Avast"].EngineVersion);
+        Assert.Equal("Win32:Evo-Gen", data.Attributes!.LastAnalysisResults!["Avast"].Result);
+        Assert.Equal("undetected", data.Attributes!.LastAnalysisResults!["Microsoft"].Category);
+        Assert.Null(data.Attributes!.LastAnalysisResults!["Microsoft"].Result);
+        Assert.Equal("2026-09-10T00:00:00+00:00", data.Attributes!.LastAnalysisResults!["Avast"].EngineUpdate);
+
         Assert.NotNull(data.Relationships);
         Assert.True(data.Relationships!.Raw.ContainsKey("comments"));
         Assert.NotNull(data.Links);

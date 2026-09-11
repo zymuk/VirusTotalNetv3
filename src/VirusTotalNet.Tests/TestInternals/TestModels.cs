@@ -1,4 +1,6 @@
+using System.Collections.Generic;
 using VirusTotalNet.v3.Models;
+using VirusTotalNet.v3.Models.Attributes;
 
 namespace VirusTotalNet.Tests.TestInternals;
 
@@ -10,6 +12,8 @@ public sealed class TestFileAttributes
     public int? TimesSubmitted { get; set; }
     public DateTime? FirstSubmissionDate { get; set; }
     public DateTimeOffset? LastModificationDate { get; set; }
+    public LastAnalysisStats? LastAnalysisStats { get; set; }
+    public Dictionary<string, LastAnalysisResult>? LastAnalysisResults { get; set; }
 }
 
 public sealed class TestFileObject : VtObject<TestFileAttributes> { }

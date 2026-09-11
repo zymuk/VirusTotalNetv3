@@ -7,7 +7,7 @@
 * Zero external dependencies; targets `net8.0` (trimmable, AOT-compatible) and `netstandard2.0`, packaged as `VirusTotalNet.v3`
 * Single envelope `VtResponse<T>` with lossless `JsonExtensionData` and tolerant JSON converters (string-typed numbers, Unix timestamps, crammed dates) for every endpoint
 * `VtClient` — `x-apikey` auth, base URL, AOT-safe overloads, shared rate limiter (4 req/min & 500 req/day), retry with exponential backoff + jitter; maps `error.code` to a typed exception hierarchy (`ThrowOnError` toggle)
-* Files — scan (≤ 32 MB), upload > 32 MB via pre-signed URL, report by md5/sha1/sha256, rescan, download
+* Files — scan (≤ 32 MB), upload > 32 MB via pre-signed URL, report by md5/sha1/sha256, rescan, download; typed per-engine results (`LastAnalysisResults`) plus aggregated `LastAnalysisStats`
 * Analyses — get analysis, `WaitForCompletionAsync` with configurable polling
 * URLs / Domains / IPs — scan, get, rescan; resolutions, subdomains
 * Comments & votes on any object type (list + create)
@@ -137,5 +137,13 @@ using var provider = services.BuildServiceProvider();
 var fileClient = provider.GetRequiredService<IFileClient>();
 FileObject report = await fileClient.GetFileAsync("sha256_of_the_file");
 ```
+
+Batch report generator — the `VirusTotalNet.ReportGenerator` console tool scans one or more files, uploads the ones VirusTotal has never seen (choosing the pre-signed large-file flow automatically), waits for the analyses, and writes a self-contained HTML-reporting XML (embedded XSL, opens in any browser). Run it with `VT_API_KEY` and a list of file paths:
+
+```
+dotnet run --project src/VirusTotalNet.ReportGenerator -- D:\folder\a.bin D:\folder\b.dll
+```
+
+Output `VirusTotalReport_<timestamp>.xml` lands in the build output folder and renders the classic per-engine table (tool, version, signature date, verdict) with clickable links to the VirusTotal GUI.
 
 Features and examples in this README only appear once they are implemented and tested.
