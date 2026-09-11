@@ -20,7 +20,7 @@
 
 ### Examples
 
-Every example below is shipped and runnable in the `VirusTotalNet.Examples` console project (`VT_API_KEY` required).
+Every example below is shipped and runnable in the `VirusTotalNet.v3.Examples` console project (`VT_API_KEY` required).
 
 The classic EICAR "seen before?" check, one line like the v2 library. Set `VT_API_KEY` and run the console project:
 
@@ -138,15 +138,15 @@ var fileClient = provider.GetRequiredService<IFileClient>();
 FileObject report = await fileClient.GetFileAsync("sha256_of_the_file");
 ```
 
-Batch report generator — the `VirusTotalNet.ReportGenerator` console tool scans one or more files, uploads the ones VirusTotal has never seen (choosing the pre-signed large-file flow automatically when over 32 MB), waits for the analyses, and writes a self-contained HTML-reporting XML using the original emotive XSL style (opens in any browser). Pass `-apiKey=<key>` or set the `VT_API_KEY` environment variable, then supply the path to scan:
+Batch report generator — the `VirusTotalNet.v3.ReportGenerator` console tool scans one or more files, uploads the ones VirusTotal has never seen (choosing the pre-signed large-file flow automatically when over 32 MB), waits for the analyses, and writes a self-contained HTML-reporting XML using the original emotive XSL style (opens in any browser). Pass `-apiKey=<key>` or set the `VT_API_KEY` environment variable, then supply the path to scan:
 
 ```shell
 # using the -apiKey flag
-dotnet run --project src/VirusTotalNet.ReportGenerator -- -apiKey=YOUR_KEY -path=D:\MyFolder -report=D:\Report.xml
+dotnet run --project src/VirusTotalNet.v3.ReportGenerator -- -apiKey=YOUR_KEY -path=D:\MyFolder -report=D:\Report.xml
 
 # using VT_API_KEY env var
 set VT_API_KEY=...
-dotnet run --project src/VirusTotalNet.ReportGenerator -- -path=D:\MyFolder -report=D:\Report.xml
+dotnet run --project src/VirusTotalNet.v3.ReportGenerator -- -path=D:\MyFolder -report=D:\Report.xml
 ```
 
 Other flags: `-showTabAnalyzing` opens the VirusTotal GUI in a browser after each lookup, `-logPathUpload=<logfile>` writes scan IDs to a log file.
