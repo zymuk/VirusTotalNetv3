@@ -99,11 +99,11 @@ public class RelationshipClientTests
             StubHttpMessageHandler.Json(HttpStatusCode.OK,
                 $$""""
                     { "data": [
-                        { "type": "comment", "id": "c1", "attributes": { "text": "ignored" } },
+                        { "type": "comment", "id": "c1" },
                         { "type": "comment", "id": "c2" }
                       ],
                       "meta": { "count": 2 },
-                      "links": { "next": "https://x/api/v3/files/{{Sha256}}/comments?cursor=z" } }
+                      "links": { "next": "https://x/api/v3/files/{{Sha256}}/relationships/comments?cursor=z" } }
                     """"));
 
         using var vt = new VtClient(Options(), new HttpClient(handler));
@@ -119,7 +119,7 @@ public class RelationshipClientTests
         Assert.Equal("z", page.NextCursor);
 
         var request = Assert.Single(handler.Requests);
-        Assert.Equal(VirusTotalOptions.DefaultBaseAddress + $"files/{Sha256}/comments", request.RequestUri!.ToString());
+        Assert.Equal(VirusTotalOptions.DefaultBaseAddress + $"files/{Sha256}/relationships/comments", request.RequestUri!.ToString());
     }
 
     [Fact]

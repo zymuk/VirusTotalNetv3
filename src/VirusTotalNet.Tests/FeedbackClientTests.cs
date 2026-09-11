@@ -115,6 +115,8 @@ public class FeedbackClientTests
         await Assert.ThrowsAsync<ArgumentException>(() => client.AddCommentAsync(VtObjectType.File, "id", " "));
         await Assert.ThrowsAsync<ArgumentException>(() => client.GetVotesAsync("", "id"));
         await Assert.ThrowsAsync<ArgumentException>(() => client.AddVoteAsync(VtObjectType.File, "id", ""));
+        await Assert.ThrowsAsync<ArgumentException>(() => client.AddVoteAsync(VtObjectType.File, "id", "suspicious"));
+        await Assert.ThrowsAsync<ArgumentException>(() => client.AddVoteAsync(VtObjectType.File, "id", "HARMLESS"));
 
         Assert.Empty(handler.Requests);
     }

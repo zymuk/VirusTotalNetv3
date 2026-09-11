@@ -106,14 +106,14 @@ public sealed class RelationshipsClient : IRelationshipsClient
     public async Task<VtCollection<T>> GetRelatedAsync<T>(string objectType, string id, string relationshipName, string? cursor = null, CancellationToken cancellationToken = default)
         where T : class
     {
-        var page = await FetchPageAsync(objectType, id, relationshipName, cursor, cancellationToken).ConfigureAwait(false);
+        var page = await FetchPageAsync(objectType, id, relationshipName, cursor, descriptorsOnly: false, cancellationToken).ConfigureAwait(false);
         return ToCollection<T>(page);
     }
 
     /// <inheritdoc />
     public async Task<VtCollection<VtObjectId>> GetRelatedIdsAsync(string objectType, string id, string relationshipName, string? cursor = null, CancellationToken cancellationToken = default)
     {
-        var page = await FetchPageAsync(objectType, id, relationshipName, cursor, cancellationToken).ConfigureAwait(false);
+        var page = await FetchPageAsync(objectType, id, relationshipName, cursor, descriptorsOnly: true, cancellationToken).ConfigureAwait(false);
 
         var items = new List<VtObjectId>(page.Items.Count);
         foreach (var element in page.Items)
@@ -154,15 +154,22 @@ public sealed class RelationshipsClient : IRelationshipsClient
     /// <inheritdoc />
     public void ClearCache() => _cache.Clear();
 
-    private async Task<CachedPage> FetchPageAsync(string objectType, string id, string relationshipName, string? cursor, CancellationToken cancellationToken)
+    private async Task<CachedPage> FetchPageAsync(string objectType, string id, string relationshipName, string? cursor, bool descriptorsOnly, CancellationToken cancellationToken)
     {
         Validate(objectType, id, relationshipName);
 
         var key = $"{objectType}/{id}/{relationshipName}";
+        if (descriptorsOnly)
+            key = "ids/" + key;
         if (cursor is null && _cache.TryGetValue(key, out var cached))
             return cached;
 
-        var path = $"/{objectType}/{id}/{relationshipName}";
+        // Descriptor-only relationships are fetched from the dedicated endpoint
+        // /{objectType}/{id}/relationships/{relationshipName} so the API returns just
+        // the (type, id) descriptors without materializing attributes.
+        var path = descriptorsOnly
+            ? $"/{objectType}/{id}/relationships/{relationshipName}"
+            : $"/{objectType}/{id}/{relationshipName}";
         if (cursor is not null)
             path += $"?cursor={Uri.EscapeDataString(cursor)}";
 

@@ -93,8 +93,8 @@ public sealed class FeedbackClient : IFeedbackClient
     public async Task<VoteObject> AddVoteAsync(string objectType, string id, string verdict, CancellationToken cancellationToken = default)
     {
         var path = ValidatePath(objectType, id);
-        if (string.IsNullOrWhiteSpace(verdict))
-            throw new ArgumentException("A verdict is required.", nameof(verdict));
+        if (!IsValidVerdict(verdict))
+            throw new ArgumentException("The verdict must be either \"harmless\" or \"malicious\".", nameof(verdict));
 
         var body = new { data = new { type = VtObjectType.Vote, attributes = new { verdict } } };
         var response = await _client.PostAsync<VoteObject>(path + "/votes", body, cancellationToken).ConfigureAwait(false);
@@ -113,4 +113,7 @@ public sealed class FeedbackClient : IFeedbackClient
 
     private static string Paginate(string path, string? cursor)
         => string.IsNullOrEmpty(cursor) ? path : $"{path}?cursor={Uri.EscapeDataString(cursor)}";
+
+    private static bool IsValidVerdict(string? verdict)
+        => verdict is "harmless" or "malicious";
 }
