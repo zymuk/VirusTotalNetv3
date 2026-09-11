@@ -1,10 +1,10 @@
 # VirusTotal.NET - A full implementation of the VirusTotal 3.0 API
 
-[![NuGet](https://img.shields.io/nuget/v/VirusTotalNet.v3.svg?style=flat-square&label=nuget)](https://www.nuget.org/packages/VirusTotalNet.v3/)
+[![NuGet](https://img.shields.io/nuget/v/VirusTotalNet.V3.svg?style=flat-square&label=nuget)](https://www.nuget.org/packages/VirusTotalNet.V3/)
 
 ### Features
 
-* Zero external dependencies; targets `net8.0` (trimmable, AOT-compatible) and `netstandard2.0`, packaged as `VirusTotalNet.v3`
+* Zero external dependencies; targets `net8.0` (trimmable, AOT-compatible) and `netstandard2.0`, packaged as `VirusTotalNet.V3`
 * Single envelope `VtResponse<T>` with lossless `JsonExtensionData` and tolerant JSON converters (string-typed numbers, Unix timestamps, crammed dates) for every endpoint
 * `VtClient` — `x-apikey` auth, base URL, AOT-safe overloads, shared rate limiter (4 req/min & 500 req/day), retry with exponential backoff + jitter; maps `error.code` to a typed exception hierarchy (`ThrowOnError` toggle)
 * Files — scan (≤ 32 MB), upload > 32 MB via pre-signed URL, report by md5/sha1/sha256, rescan, download; typed per-engine results (`LastAnalysisResults`) plus aggregated `LastAnalysisStats`
@@ -21,17 +21,17 @@
 * Users & groups — `IUsersClient`/`UsersClient`: get/update/delete users and groups, manage group membership (list / add / remove)
 * Error handling — `ThrowOnError=false` returns the error envelope; Result-style `VtResult<T>` through `IVtClient.Try*`, so checks never need a try/catch
 * `VirusTotal` facade — v2-style one-liners: `GetFileReportAsync(hash)` / `GetFileReportAsync(bytes)`, auto-scans and waits when the file is unknown
-* DI — optional `VirusTotalNet.v3.DependencyInjection` package: `AddVirusTotal` (options delegate or `IConfiguration` section) registers the client, all module clients and the facade behind one shared `IVtClient`
+* DI — optional `VirusTotalNet.V3.DependencyInjection` package: `AddVirusTotal` (options delegate or `IConfiguration` section) registers the client, all module clients and the facade behind one shared `IVtClient`
 
 ### Examples
 
-Every example below is shipped and runnable in the `VirusTotalNet.v3.Examples` console project (`VT_API_KEY` required).
+Every example below is shipped and runnable in the `VirusTotalNet.V3.Examples` console project (`VT_API_KEY` required).
 
 The classic EICAR "seen before?" check, one line like the v2 library. Set `VT_API_KEY` and run the console project:
 
 ```csharp
 using System.Text;
-using VirusTotalNet.v3;
+using VirusTotalNet.V3;
 
 var vt = new VirusTotal("YOUR_API_KEY");
 
@@ -47,7 +47,7 @@ Upload a file, wait for the analysis to finish, then fetch the result — the sa
 
 ```csharp
 using System.Text;
-using VirusTotalNet.v3;
+using VirusTotalNet.V3;
 
 var vt = new VirusTotal("YOUR_API_KEY");
 
@@ -73,9 +73,9 @@ Console.WriteLine("Malicious: " + report.Attributes.LastAnalysisStats.Malicious)
 Walk the links between objects: look a file up, then query it directly by type (M3 clients) or traverse its relationships from the object at hand (M4):
 
 ```csharp
-using VirusTotalNet.v3;
-using VirusTotalNet.v3.Clients;
-using VirusTotalNet.v3.Relationships;
+using VirusTotalNet.V3;
+using VirusTotalNet.V3.Clients;
+using VirusTotalNet.V3.Relationships;
 
 var vt = new VirusTotal("YOUR_API_KEY");
 FileObject file = await vt.FileClient.GetFileAsync("sha256_of_the_file");
@@ -100,8 +100,8 @@ M3 clients (`UrlClient`, `DomainClient`, `IpClient`, `FeedbackClient`) target a 
 Run an intelligence search and handle errors without try/catch — `ThrowOnError` stays on by default, or switch to Result-style:
 
 ```csharp
-using VirusTotalNet.v3;
-using VirusTotalNet.v3.Clients;
+using VirusTotalNet.V3;
+using VirusTotalNet.V3.Clients;
 
 var vt = new VirusTotal("YOUR_API_KEY");
 
@@ -121,13 +121,13 @@ else
 
 `SearchAsync` mirrors the other collection clients (`VtCollection<T>` with `Count`/`NextCursor`); `TryGetAsync`/`TryPostAsync` return a `VtResult<T>` discriminated union and still apply the shared rate limiter and retry policy.
 
-M6 — optional package `VirusTotalNet.v3.DependencyInjection` wires everything into your DI container:
+M6 — optional package `VirusTotalNet.V3.DependencyInjection` wires everything into your DI container:
 
 ```csharp
 using Microsoft.Extensions.DependencyInjection;
-using VirusTotalNet.v3.Clients;
-using VirusTotalNet.v3.DependencyInjection;
-using VirusTotalNet.v3.Models;
+using VirusTotalNet.V3.Clients;
+using VirusTotalNet.V3.DependencyInjection;
+using VirusTotalNet.V3.Models;
 
 var services = new ServiceCollection();
 
@@ -143,15 +143,15 @@ var fileClient = provider.GetRequiredService<IFileClient>();
 FileObject report = await fileClient.GetFileAsync("sha256_of_the_file");
 ```
 
-Batch report generator — the `VirusTotalNet.v3.ReportGenerator` console tool scans one or more files, uploads the ones VirusTotal has never seen (choosing the pre-signed large-file flow automatically when over 32 MB), waits for the analyses, and writes a self-contained HTML-reporting XML using the original emotive XSL style (opens in any browser). Pass `-apiKey=<key>` or set the `VT_API_KEY` environment variable, then supply the path to scan:
+Batch report generator — the `VirusTotalNet.V3.ReportGenerator` console tool scans one or more files, uploads the ones VirusTotal has never seen (choosing the pre-signed large-file flow automatically when over 32 MB), waits for the analyses, and writes a self-contained HTML-reporting XML using the original emotive XSL style (opens in any browser). Pass `-apiKey=<key>` or set the `VT_API_KEY` environment variable, then supply the path to scan:
 
 ```shell
 # using the -apiKey flag
-dotnet run --project src/VirusTotalNet.v3.ReportGenerator -- -apiKey=YOUR_KEY -path=D:\MyFolder -report=D:\Report.xml
+dotnet run --project src/VirusTotalNet.V3.ReportGenerator -- -apiKey=YOUR_KEY -path=D:\MyFolder -report=D:\Report.xml
 
 # using VT_API_KEY env var
 set VT_API_KEY=...
-dotnet run --project src/VirusTotalNet.v3.ReportGenerator -- -path=D:\MyFolder -report=D:\Report.xml
+dotnet run --project src/VirusTotalNet.V3.ReportGenerator -- -path=D:\MyFolder -report=D:\Report.xml
 ```
 
 Other flags: `-showTabAnalyzing` opens the VirusTotal GUI in a browser after each lookup, `-logPathUpload=<logfile>` writes scan IDs to a log file.
