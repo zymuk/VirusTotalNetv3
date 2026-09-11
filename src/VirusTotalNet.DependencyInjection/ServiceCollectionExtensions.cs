@@ -67,6 +67,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IVtClient>(sp => sp.GetRequiredService<VtClient>());
 
         services.AddSingleton<IFileClient, FileClient>();
+        services.AddSingleton<IBehaviourClient, BehaviourClient>();
         services.AddSingleton<IAnalysisClient, AnalysisClient>();
         services.AddSingleton<IUrlClient, UrlClient>();
         services.AddSingleton<IDomainClient, DomainClient>();

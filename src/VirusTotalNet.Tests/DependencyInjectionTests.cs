@@ -26,6 +26,7 @@ public class DependencyInjectionTests
         using var provider = services.BuildServiceProvider();
 
         Assert.IsType<FileClient>(provider.GetRequiredService<IFileClient>());
+        Assert.IsType<BehaviourClient>(provider.GetRequiredService<IBehaviourClient>());
         Assert.IsType<AnalysisClient>(provider.GetRequiredService<IAnalysisClient>());
         Assert.IsType<UrlClient>(provider.GetRequiredService<IUrlClient>());
         Assert.IsType<DomainClient>(provider.GetRequiredService<IDomainClient>());
