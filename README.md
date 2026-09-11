@@ -138,12 +138,17 @@ var fileClient = provider.GetRequiredService<IFileClient>();
 FileObject report = await fileClient.GetFileAsync("sha256_of_the_file");
 ```
 
-Batch report generator — the `VirusTotalNet.ReportGenerator` console tool scans one or more files, uploads the ones VirusTotal has never seen (choosing the pre-signed large-file flow automatically), waits for the analyses, and writes a self-contained HTML-reporting XML (embedded XSL, opens in any browser). Run it with `VT_API_KEY` and a list of file paths:
+Batch report generator — the `VirusTotalNet.ReportGenerator` console tool scans one or more files, uploads the ones VirusTotal has never seen (choosing the pre-signed large-file flow automatically when over 32 MB), waits for the analyses, and writes a self-contained HTML-reporting XML using the original emotive XSL style (opens in any browser). Pass `-apiKey=<key>` or set the `VT_API_KEY` environment variable, then supply the path to scan:
 
-```
-dotnet run --project src/VirusTotalNet.ReportGenerator -- D:\folder\a.bin D:\folder\b.dll
+```shell
+# using the -apiKey flag
+dotnet run --project src/VirusTotalNet.ReportGenerator -- -apiKey=YOUR_KEY -path=D:\MyFolder -report=D:\Report.xml
+
+# using VT_API_KEY env var
+set VT_API_KEY=...
+dotnet run --project src/VirusTotalNet.ReportGenerator -- -path=D:\MyFolder -report=D:\Report.xml
 ```
 
-Output `VirusTotalReport_<timestamp>.xml` lands in the build output folder and renders the classic per-engine table (tool, version, signature date, verdict) with clickable links to the VirusTotal GUI.
+Other flags: `-showTabAnalyzing` opens the VirusTotal GUI in a browser after each lookup, `-logPathUpload=<logfile>` writes scan IDs to a log file.
 
 Features and examples in this README only appear once they are implemented and tested.

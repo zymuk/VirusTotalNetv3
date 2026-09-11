@@ -2,7 +2,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\VirusTotalNet\VirusTotalNet.csproj" />
-    <None Include="VirusTotalReport.xslt" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <PropertyGroup>
